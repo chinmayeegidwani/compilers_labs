@@ -1,7 +1,7 @@
 /*
  * UofT ECE 467
- * - 1002934284, Kamran, Ramji
- * - 1003062473, Chinmayee, Gidwani
+ * - student number, first name, last name
+ * - student number, first name, last name
  */
 
 #include "compiler.hpp"

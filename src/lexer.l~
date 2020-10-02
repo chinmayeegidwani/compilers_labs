@@ -98,7 +98,6 @@ ASSIGN "="
 {PLUS} {int x = GET_COLUMN(); INC_COLUMN(yyleng); return TOK(TOK_PLUS, x); }
 {MINUS} {int x = GET_COLUMN(); INC_COLUMN(yyleng); return TOK(TOK_MINUS, x); } 
 {STAR} {int x = GET_COLUMN(); INC_COLUMN(yyleng); return TOK(TOK_STAR, x); }
-{SLASH} {int x = GET_COLUMN(); INC_COLUMN(yyleng); return TOK(TOK_SLASH, x); }
 {LOG_AND} {int x = GET_COLUMN(); INC_COLUMN(yyleng); return TOK(TOK_LOG_AND, x); }
 {LOG_OR} {int x = GET_COLUMN(); INC_COLUMN(yyleng); return TOK(TOK_LOG_OR, x); }
 {IF} {int x = GET_COLUMN(); INC_COLUMN(yyleng); return TOK(TOK_IF, x); }

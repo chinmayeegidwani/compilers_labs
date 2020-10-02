@@ -162,10 +162,8 @@ expression
 	| ternary_expression
 	| cast_expression
 	| function_call { printf("expression := TOK_TRUE | TOK_FALSE | TOK_INT | TOK_FLOAT | binary_expression | \
-				unary_expression | relational_expression | ternary_expression | cast_expression | function_call"); }
+				unary_expression | relational_expression | ternary_expression | cast_expression"); }
 	;
-
-compound_statement
 
 declarations
 	: declarations decl
