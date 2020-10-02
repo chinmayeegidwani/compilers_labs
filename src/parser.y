@@ -166,6 +166,40 @@ expression
 	;
 
 compound_statement
+	: TOK_IF TOK_LPAREN expression TOK_RPAREN block
+	| TOK_FOR TOK_LPAREN TOK_SEMIC TOK_SEMIC block
+	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC TOK_SEMIC block
+	| TOK_FOR TOK_LPAREN TOK_SEMIC expression TOK_SEMIC block
+	| TOK_FOR TOK_LPAREN TOK_SEMIC TOK_SEMIC single_statement block
+	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC expression TOK_SEMIC block
+	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC TOK_SEMIC single_statement block
+	| TOK_FOR TOK_LPAREN TOK_SEMIC expression TOK_SEMIC single_statement block
+	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC expression TOK_SEMIC single_statement block
+	| TOK_WHILE TOK_LPAREN expression TOK_RPAREN block {printf("compound_statement := TOK_IF TOK_LPAREN expression TOK_RPAREN block | \
+											TOK_FOR TOK_LPAREN single_statement? TOK_SEMIC expression? \
+											TOK_SEMIC single_statement? block"); }
+	; 
+
+binary_expression
+	: expression binary_op expression {printf("binary_expression := expression binary_op expression"); }
+	;
+
+unary_expression
+	: unary_op expression {printf("unary_expression := unary_op expression"); }
+	;
+
+relational_expression
+	: expression relational_op expression {printf("relational_expression := expression relational_op expression"); }
+	;
+
+binary_op
+	: TOK_PLUS
+	| TOK_MINUS
+	| TOK_STAR
+	| TOK_SLASH
+	| TOK_LOG_AND
+	| TOK_LOG_OR {printf("binary_op := TOK_PLUS | TOK_MINUS | TOK_STAR | TOK_SLASH | TOK_LOG_AND | TOK_LOG_OR"); }
+	;
 
 declarations
 	: declarations decl
