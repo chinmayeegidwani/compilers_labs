@@ -112,12 +112,12 @@ name
 
 parameter_list
 	: %empty
-	| declaration declaration_extra { printf('parameter_list := %empty | declaration declaration_extra'); }
+	| declaration declaration_extra { printf("parameter_list := %%empty | declaration declaration_extra"); }
 	;
 
 declaration_extra
 	: %empty
-	| TOK_COMMA declaration declaration_extra { printf('declaration_extra := %empty | TOK_COMMA declaration declaration_extra'); }
+	| TOK_COMMA declaration declaration_extra { printf("declaration_extra := %%empty | TOK_COMMA declaration declaration_extra"); }
 	;
 
 block
@@ -126,7 +126,7 @@ block
 
 suite
 	: %empty
-	| statement TOK_SEMIC suite { printf('suite := %empty | statement TOK_SEMIC suite'); }
+	| statement TOK_SEMIC suite { printf("suite := %%empty | statement TOK_SEMIC suite"); }
 	;
 
 declaration
@@ -139,9 +139,9 @@ statement
 	;
 
 single_statement
-	: declaration assign expression
-	| name assign expression
-	| name binary_op assign expression
+	: declaration TOK_ASSIGN expression
+	| name TOK_ASSIGN expression
+	| name binary_op TOK_ASSIGN expression
 	| TOK_BREAK
 	| TOK_CONTINUE
 	| TOK_RETURN
@@ -165,7 +165,6 @@ expression
 				unary_expression | relational_expression | ternary_expression | cast_expression | function_call"); }
 	;
 
-<<<<<<< HEAD
 compound_statement
 	: TOK_IF TOK_LPAREN expression TOK_RPAREN block
 	| TOK_FOR TOK_LPAREN TOK_SEMIC TOK_SEMIC block
@@ -232,7 +231,7 @@ function_call
 
 comma_expression
 	: %empty
-	| TOK_COMMA expression comma_expression { printf("comma_expression := %empty | TOK_COMMA expression comma_expression"); }
+	| TOK_COMMA expression comma_expression { printf("comma_expression := %%empty | TOK_COMMA expression comma_expression"); }
 	;
 
 declarations
