@@ -165,7 +165,38 @@ expression
 				unary_expression | relational_expression | ternary_expression | cast_expression | function_call"); }
 	;
 
-compound_statement
+unary_op
+	: TOK_MINUS { printf("unary_op := minus"); }
+	;
+
+relational_op
+	: TOK_EQ
+	| TOK_NE
+	| TOK_LT
+	| TOK_GT
+	| TOK_LE
+	| TOK_GE { printf("relational_op := eq | ne | lt | gt | le | ge"); }
+	;
+
+ternary_expression
+	: expression TOK_QM expression TOK_COLON expression { printf("ternary_expression := expression question_mark expression colon expression"); }
+	;
+
+cast_expression
+	: TOK_LPAREN type TOK_RPAREN expression { printf("cast_expression := lparen type rparen expression"); }
+	;
+
+function_call
+	: name TOK_LPAREN
+	| expression
+	| expression comma_expression
+	| TOK_RPAREN { printf("function_call := name lparen (expression (comma expression)*)? rparen"); }
+	;
+
+comma_expression
+	: %empty
+	| TOK_COMMA expression comma_expression { printf("comma_expression := %empty | TOK_COMMA expression comma_expression"); }
+	;
 
 declarations
 	: declarations decl
