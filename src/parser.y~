@@ -39,8 +39,6 @@ template <typename T, typename... Args> static std::unique_ptr<T> make_node(yy::
 %define parse.trace
 %define parse.assert
 
-%token <std::string> HI
-%token BYE
 %token <std::string> TOK_ID
 %token <int> TOK_INT
 %token <double> TOK_FLOAT
@@ -169,17 +167,18 @@ expression
 
 compound_statement
 	: TOK_IF TOK_LPAREN expression TOK_RPAREN block
-	| TOK_FOR TOK_LPAREN TOK_SEMIC TOK_SEMIC block
-	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC TOK_SEMIC block
-	| TOK_FOR TOK_LPAREN TOK_SEMIC expression TOK_SEMIC block
-	| TOK_FOR TOK_LPAREN TOK_SEMIC TOK_SEMIC single_statement block
-	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC expression TOK_SEMIC block
-	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC TOK_SEMIC single_statement block
-	| TOK_FOR TOK_LPAREN TOK_SEMIC expression TOK_SEMIC single_statement block
-	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC expression TOK_SEMIC single_statement block
+	| TOK_FOR TOK_LPAREN TOK_SEMIC TOK_SEMIC TOK_RPAREN block
+	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC TOK_SEMIC TOK_RPAREN block
+	| TOK_FOR TOK_LPAREN TOK_SEMIC expression TOK_SEMIC TOK_RPAREN block
+	| TOK_FOR TOK_LPAREN TOK_SEMIC TOK_SEMIC single_statement TOK_RPAREN block
+	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC expression TOK_SEMIC TOK_RPAREN block
+	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC TOK_SEMIC single_statement TOK_RPAREN block
+	| TOK_FOR TOK_LPAREN TOK_SEMIC expression TOK_SEMIC single_statement TOK_RPAREN block
+	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC expression TOK_SEMIC single_statement TOK_RPAREN block
 	| TOK_WHILE TOK_LPAREN expression TOK_RPAREN block {printf("compound_statement := TOK_IF TOK_LPAREN expression TOK_RPAREN block | \
-											TOK_FOR TOK_LPAREN single_statement? TOK_SEMIC expression? \
-											TOK_SEMIC single_statement? block \n"); }
+											TOK_FOR TOK_LPAREN single_statement? TOK_SEMIC expression? block \
+											TOK_SEMIC single_statement? TOK_RPAREN block \
+											| TOK_WHILE TOK_LPAREN expression TOK_RPAREN block \n"); }
 	; 
 
 binary_expression
@@ -225,24 +224,13 @@ cast_expression
 	;
 
 function_call
-	: name TOK_LPAREN
-	| expression
-	| expression comma_expression
-	| TOK_RPAREN { printf("function_call := name lparen (expression (comma expression)*)? rparen \n"); }
+	: name TOK_LPAREN TOK_RPAREN
+	| name TOK_LPAREN expression comma_expression TOK_RPAREN { printf("function_call := name lparen (expression (comma expression)*)? rparen \n"); }
 	;
 
 comma_expression
 	: %empty
 	| TOK_COMMA expression comma_expression { printf("comma_expression := %%empty | TOK_COMMA expression comma_expression \n"); }
-	;
-
-declarations
-	: declarations decl
-	| %empty
-	;
-
-decl
-	: HI { printf("decl: %s\n", $1.c_str()); }
 	;
 
 %%

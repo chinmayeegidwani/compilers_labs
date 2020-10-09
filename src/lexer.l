@@ -39,7 +39,6 @@ static int make_symbol(YYSTYPE*, YYSTYPE);
 
 WS [ \r\t]+
 NL [\n]
-DIGIT [0-9]
 IDENTIFIER [_A-Za-z][_A-Za-z0-9]*
 INTEGER [0-9]+
 FLOAT [0-9]*"."[0-9]+([eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0-9]+|[0-9]+"."([eE][+-]?[0-9]+)?
@@ -76,9 +75,6 @@ ASSIGN "="
 %%
 
 {WS} { INC_COLUMN(yyleng); }
-
-
-{DIGIT} { int x = GET_COLUMN(); INC_COLUMN(1); return TOK(HI, x, std::string { yytext, static_cast<size_t>(yyleng) }); }
 
 {NL} { SET_COLUMN(1); }
 {INTEGER} {int x = GET_COLUMN(); INC_COLUMN(yyleng); int y = atoi(yytext); return TOK(TOK_INT, x, y); }
