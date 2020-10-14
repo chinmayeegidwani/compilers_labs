@@ -129,7 +129,7 @@ block
 
 suite
 	: %empty
-	| statement TOK_SEMIC suite { printf("suite := %%empty | statement TOK_SEMIC suite \n"); }
+	| statement suite { printf("suite := %%empty | statement suite \n"); }
 	;
 
 declaration
@@ -137,8 +137,8 @@ declaration
 	;
 
 statement
-	: single_statement
-	| compound_statement { printf("statement := single_statement | compound_statement \n"); }
+	: single_statement TOK_SEMIC
+	| compound_statement { printf("statement := single_statement TOK_SEMIC| compound_statement \n"); }
 	;
 
 single_statement
