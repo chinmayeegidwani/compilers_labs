@@ -71,12 +71,10 @@ template <typename T, typename... Args> static std::unique_ptr<T> make_node(yy::
 %token TOK_COLON
 %token TOK_QM
 %token TOK_ASSIGN
-%left TOK_MINUS
-%left TOK_LOG_OR
+%left TOK_LOG_OR /* lower precedence comes first */
 %left TOK_LOG_AND
-%left TOK_PLUS
-%left TOK_SLASH
-%left TOK_STAR
+%left TOK_MINUS TOK_PLUS
+%left TOK_SLASH TOK_STAR
 %type <Node*> root
 
 %start root
@@ -187,12 +185,7 @@ compound_statement
 	; 
 
 binary_expression
-	: expression TOK_LOG_OR expression
-	| expression TOK_LOG_AND expression
-	| expression TOK_SLASH expression
-	| expression TOK_STAR expression
-	| expression TOK_PLUS expression 
-	| expression TOK_MINUS expression {printf("binary_expression := expression binary_op expression \n"); }
+	: expression binary_op expression {printf("binary_expression := expression binary_op expression \n"); }
 	;
 
 unary_expression
