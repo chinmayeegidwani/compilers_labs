@@ -1,0 +1,10 @@
+ECE467 - Lab 2
+Chinmayee Gidwani
+Kamran Ramji
+
+We worked together on this lab by screensharing and working through the grammar to be written. We also set up a github repository, so we split the writing of some productions between the two of us. We did productions for root - declaration together. Kamran did statement - unary expression. Chinmayee did relational expression - comma expression. We also attended tutorial together in order to get support from the TAs.
+
+Major design decisions: 
+	We followed the C++ operator priority documentation to chain together valid expression productions (ie to eliminate conflicts). We started with ternary expression, which has the lowest precedence, and worked our way down to unary minus and casting, which have the highest precendence. In order to give these operators the necessary associativity, the left-hand side of the operator is always the recursive production, and the righ-hand side goes "down one level" (ie to the statement dealing with operators one level up in precedence) (this is in the case of left-associative operators, which happens to be all the operators except ternary expressions, for which we did the reverse).
+
+This strategy eliminated parsing conflicts and produces valid expressions. 

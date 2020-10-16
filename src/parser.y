@@ -71,10 +71,7 @@ template <typename T, typename... Args> static std::unique_ptr<T> make_node(yy::
 %token TOK_COLON
 %token TOK_QM
 %token TOK_ASSIGN
-%left TOK_LOG_OR /* lower precedence comes first */
-%left TOK_LOG_AND
-%left TOK_MINUS TOK_PLUS
-%left TOK_SLASH TOK_STAR
+
 %type <Node*> root
 
 %start root
@@ -86,13 +83,13 @@ root
 	;
 
 function_list
-	: function
-	| function_list function { printf("function_list := function | function_list function \n"); }
+	: function { printf("function_list := function  \n"); }
+	| function_list function { printf("function_list := function_list function \n"); }
 	;
 
 function
-	: function_decl TOK_SEMIC
-	| function_defn { printf("function := function_decl TOK_SEMIC | function_defn \n"); }
+	: function_decl TOK_SEMIC { printf("function := function_decl TOK_SEMIC \n"); }
+	| function_defn { printf("function := function_defn \n"); }
 	;
 
 function_decl
@@ -112,13 +109,13 @@ name
 	;
 
 parameter_list
-	: %empty
-	| declaration declaration_extra { printf("parameter_list := %%empty | declaration declaration_extra \n"); }
+	: %empty { printf("parameter_list := %%empty \n"); }
+	| declaration declaration_extra { printf("parameter_list := declaration declaration_extra \n"); }
 	;
 
 declaration_extra
-	: %empty
-	| TOK_COMMA declaration declaration_extra { printf("declaration_extra := %%empty | TOK_COMMA declaration declaration_extra \n"); }
+	: %empty { printf("declaration_extra := %%empty \n"); }
+	| TOK_COMMA declaration declaration_extra { printf("declaration_extra := TOK_COMMA declaration declaration_extra \n"); }
 	;
 
 block
@@ -126,8 +123,8 @@ block
 	;
 
 suite
-	: %empty
-	| statement suite { printf("suite := %%empty | statement suite \n"); }
+	: %empty { printf("suite := %%empty \n"); }
+	| statement suite { printf("suite := statement suite \n"); }
 	;
 
 declaration
@@ -135,105 +132,133 @@ declaration
 	;
 
 statement
-	: single_statement TOK_SEMIC
-	| compound_statement { printf("statement := single_statement TOK_SEMIC| compound_statement \n"); }
+	: single_statement TOK_SEMIC { printf("statement := single_statement TOK_SEMIC \n"); }
+	| compound_statement { printf("statement := compound_statement \n"); }
 	;
 
 single_statement
-	: declaration TOK_ASSIGN expression
-	| name TOK_ASSIGN expression
-	| name binary_op TOK_ASSIGN expression
-	| TOK_BREAK
-	| TOK_CONTINUE
-	| TOK_RETURN
-	| TOK_RETURN expression
-	| expression { printf("single_statement := declaration assign expression | \
-				name assign expression | name binary_op assign expression \
-				| TOK_BREAK | TOK_CONTINUE | TOK_RETURN | TOK_RETURN expression \n"); }
-	;
-
-expression
-	: TOK_TRUE
-	| TOK_FALSE
-	| TOK_INT
-	| TOK_FLOAT
-	| binary_expression
-	| unary_expression
-	| relational_expression
-	| ternary_expression
-	| cast_expression
-	| function_call 
-	| TOK_LPAREN expression TOK_RPAREN { printf("expression := TOK_TRUE | TOK_FALSE | TOK_INT | TOK_FLOAT | binary_expression | \
-				unary_expression | relational_expression | ternary_expression | cast_expression | function_call | \
-				TOK_LPAREN expression TOK_RPAREN \n"); }
+	: declaration TOK_ASSIGN expression { printf("single_statement := declaration assign expression \n"); }
+	| name TOK_ASSIGN expression { printf("single_statement := name assign expression \n"); }
+	| name plus_minus_op TOK_ASSIGN expression { printf("single statement := name plus_minus_op assign expression \n"); }
+	| name mul_div_op TOK_ASSIGN expression { printf("single statement := name mul_div assign expression \n"); }
+	| name TOK_LOG_AND TOK_ASSIGN expression { printf("single statement := name TOK_LOG_AND TOK_ASSIGN expression \n"); }
+	| name TOK_LOG_OR TOK_ASSIGN expression { printf("single statement := name TOK_LOG_OR TOK_ASSIGN expression \n"); }
+	| TOK_BREAK { printf("single_statement := TOK_BREAK \n"); }
+	| TOK_CONTINUE { printf("single_statement := TOK_CONTINUE \n"); }
+	| TOK_RETURN { printf("single_statement := TOK_RETURN \n"); }
+	| TOK_RETURN expression { printf("single_statement := TOK_RETURN expression \n"); }
+	| expression { printf("single_statement := expression \n"); }
 	;
 
 compound_statement
-	: TOK_IF TOK_LPAREN expression TOK_RPAREN block
-	| TOK_FOR TOK_LPAREN TOK_SEMIC TOK_SEMIC TOK_RPAREN block
-	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC TOK_SEMIC TOK_RPAREN block
-	| TOK_FOR TOK_LPAREN TOK_SEMIC expression TOK_SEMIC TOK_RPAREN block
-	| TOK_FOR TOK_LPAREN TOK_SEMIC TOK_SEMIC single_statement TOK_RPAREN block
-	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC expression TOK_SEMIC TOK_RPAREN block
-	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC TOK_SEMIC single_statement TOK_RPAREN block
-	| TOK_FOR TOK_LPAREN TOK_SEMIC expression TOK_SEMIC single_statement TOK_RPAREN block
-	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC expression TOK_SEMIC single_statement TOK_RPAREN block
-	| TOK_WHILE TOK_LPAREN expression TOK_RPAREN block {printf("compound_statement := TOK_IF TOK_LPAREN expression TOK_RPAREN block | \
-											TOK_FOR TOK_LPAREN single_statement? TOK_SEMIC expression? block \
-											TOK_SEMIC single_statement? TOK_RPAREN block \
-											| TOK_WHILE TOK_LPAREN expression TOK_RPAREN block \n"); }
+	: TOK_IF TOK_LPAREN expression TOK_RPAREN block {printf("compound_statement := TOK_IF TOK_LPAREN expression TOK_RPAREN block \n"); }
+	| TOK_FOR TOK_LPAREN TOK_SEMIC TOK_SEMIC TOK_RPAREN block {printf("compound_statement := TOK_FOR TOK_LPAREN single_statement? \
+							TOK_SEMIC expression? TOK_SEMIC single_statement? TOK_RPAREN block \n"); }
+	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC TOK_SEMIC TOK_RPAREN block {printf("compound_statement := TOK_FOR TOK_LPAREN single_statement? \
+							TOK_SEMIC expression? TOK_SEMIC single_statement? TOK_RPAREN block \n"); }
+	| TOK_FOR TOK_LPAREN TOK_SEMIC expression TOK_SEMIC TOK_RPAREN block {printf("compound_statement := TOK_FOR TOK_LPAREN single_statement? \
+							TOK_SEMIC expression? TOK_SEMIC single_statement? TOK_RPAREN block \n"); }
+	| TOK_FOR TOK_LPAREN TOK_SEMIC TOK_SEMIC single_statement TOK_RPAREN block {printf("compound_statement := TOK_FOR TOK_LPAREN single_statement? \
+							TOK_SEMIC expression? TOK_SEMIC single_statement? TOK_RPAREN block \n"); }
+	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC expression TOK_SEMIC TOK_RPAREN block {printf("compound_statement := TOK_FOR \
+												TOK_LPAREN single_statement? TOK_SEMIC expression? \
+												TOK_SEMIC single_statement? TOK_RPAREN block \n"); }
+	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC TOK_SEMIC single_statement TOK_RPAREN block {printf("compound_statement := TOK_FOR \
+												TOK_LPAREN single_statement? TOK_SEMIC expression? \
+												TOK_SEMIC single_statement? TOK_RPAREN block \n"); }
+	| TOK_FOR TOK_LPAREN TOK_SEMIC expression TOK_SEMIC single_statement TOK_RPAREN block {printf("compound_statement := TOK_FOR \
+												TOK_LPAREN single_statement? TOK_SEMIC expression? \
+												TOK_SEMIC single_statement? TOK_RPAREN block \n"); }
+	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC expression TOK_SEMIC single_statement TOK_RPAREN block {printf("compound_statement := TOK_FOR \
+												TOK_LPAREN single_statement? TOK_SEMIC expression? \
+												TOK_SEMIC single_statement? TOK_RPAREN block \n"); }
+	| TOK_WHILE TOK_LPAREN expression TOK_RPAREN block {printf("compound_statement := TOK_WHILE TOK_LPAREN expression TOK_RPAREN block \n"); }
 	; 
 
-binary_expression
-	: expression binary_op expression {printf("binary_expression := expression binary_op expression \n"); }
-	;
-
-unary_expression
-	: unary_op expression {printf("unary_expression := unary_op expression \n"); }
-	;
-
-relational_expression
-	: expression relational_op expression {printf("relational_expression := expression relational_op expression \n"); }
-	;
-
-binary_op
-	: TOK_PLUS
-	| TOK_MINUS
-	| TOK_STAR
-	| TOK_SLASH
-	| TOK_LOG_AND
-	| TOK_LOG_OR {printf("binary_op := TOK_PLUS | TOK_MINUS | TOK_STAR | TOK_SLASH | TOK_LOG_AND | TOK_LOG_OR \n"); }
-	;
-
-unary_op
-	: TOK_MINUS { printf("unary_op := minus \n"); }
-	;
-
-relational_op
-	: TOK_EQ
-	| TOK_NE
-	| TOK_LT
-	| TOK_GT
-	| TOK_LE
-	| TOK_GE { printf("relational_op := eq | ne | lt | gt | le | ge \n"); }
+expression
+	: ternary_expression { printf("expression := ternary_expression \n"); }
 	;
 
 ternary_expression
-	: expression TOK_QM expression TOK_COLON expression { printf("ternary_expression := expression question_mark expression colon expression \n"); }
+	: or_expression TOK_QM ternary_expression TOK_COLON ternary_expression { printf("ternary_expression := or_expression TOK_QM \
+										ternary_expression TOK_COLON ternary_expression \n"); }
+	| or_expression { printf("ternary_expression := or_expression \n"); }
 	;
 
-cast_expression
-	: TOK_LPAREN type TOK_RPAREN expression { printf("cast_expression := lparen type rparen expression \n"); }
+or_expression
+	: or_expression TOK_LOG_OR and_expression { printf("or_expression := or_expression TOK_LOG_OR and_expression \n"); }
+	| and_expression { printf("or_expression := and_expression \n"); }
+	;
+
+and_expression
+	: and_expression TOK_LOG_AND eq_expression { printf("and_expression := and_expression TOK_LOG_AND eq_expression \n"); }
+	| eq_expression { printf("and_expression := eq_expression \n"); }
+	;
+
+eq_expression
+	: eq_expression eq_op comp_expression { printf("eq_expression := eq_expression eq_op comp_expression \n"); }
+	| comp_expression { printf("eq_expression := comp_expression \n"); }
+	;
+eq_op
+	: TOK_NE { printf("eq_op := TOK_NE \n"); }
+	| TOK_EQ { printf("eq_op := TOK_EQ \n"); }
+	;
+
+comp_expression
+	: comp_expression comp_op plus_expression { printf("comp_expression := comp_expression comp_op plus_expression \n"); }
+	| plus_expression { printf("comp_expression := plus_expression \n"); }
+	;
+
+comp_op
+	: TOK_GE { printf("comp_op := TOK_GE \n"); }
+	| TOK_LE { printf("comp_op := TOK_LE \n"); }
+	| TOK_LT { printf("comp_op := TOK_LT \n"); }
+	| TOK_GT { printf("comp_op := TOK_GT \n"); }
+	;
+
+plus_expression
+	: plus_expression plus_minus_op mul_expression { printf("plus_expression := plus_expression plus_minus_op mul_expression \n"); }
+	| mul_expression { printf("plus_expression := mul_expression  \n"); }
+	;
+
+plus_minus_op
+	: TOK_PLUS { printf("plus_minus_op := TOK_PLUS \n"); }
+	| TOK_MINUS { printf("plus_minus_op := TOK_MINUS \n"); }
+	;
+
+mul_expression
+	: mul_expression mul_div_op term { printf("mul_expression := mul_expression mul_div_op term \n"); }
+	| term { printf("mul_expression := term \n"); }
+	;
+
+mul_div_op
+	: TOK_STAR { printf("mul_div_op := TOK_STAR \n"); }
+	| TOK_SLASH { printf("mul_div_op := TOK_SLASH \n"); }
+	;
+
+term
+	: TOK_LPAREN type TOK_RPAREN term { printf("term := TOK_LPAREN type TOK_RPAREN cast_expression \n"); }
+	| TOK_MINUS term { printf("term := TOK_MINUS factor \n"); }
+	| factor { printf("term := factor \n"); }
+	;
+
+factor
+	: TOK_INT { printf("factor := TOK_INT \n"); }
+	| TOK_FLOAT { printf("factor := TOK_FLOAT  \n"); }
+	| TOK_TRUE { printf("factor := TOK_TRUE  \n"); }
+	| TOK_FALSE { printf("factor := TOK_FALSE \n"); }
+	| TOK_LPAREN expression TOK_RPAREN { printf("factor := TOK_LPAREN expression TOK_RPAREN \n"); }
+	| function_call { printf("factor := function_call \n"); }
 	;
 
 function_call
-	: name TOK_LPAREN TOK_RPAREN
+	: name TOK_LPAREN TOK_RPAREN { printf("function_call := name lparen (expression (comma expression)*)? rparen \n"); }
 	| name TOK_LPAREN expression comma_expression TOK_RPAREN { printf("function_call := name lparen (expression (comma expression)*)? rparen \n"); }
 	;
 
 comma_expression
-	: %empty
-	| TOK_COMMA expression comma_expression { printf("comma_expression := %%empty | TOK_COMMA expression comma_expression \n"); }
+	: %empty { printf("comma_expression := %%empty \n"); }
+	| TOK_COMMA expression comma_expression { printf("comma_expression := TOK_COMMA expression comma_expression \n"); }
 	;
 
 %%
