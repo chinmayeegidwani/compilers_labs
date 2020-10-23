@@ -71,6 +71,11 @@ SEMIC ";"
 COLON ":"
 QM "?"
 ASSIGN "="
+PLUS_ASSIGN "+="
+MINUS_ASSIGN "-="
+STAR_ASSIGN "*="
+SLASH_ASSIGN "/="
+TYPE "int" | "float" | "bool" | "void"
 
 %%
 
@@ -97,6 +102,11 @@ ASSIGN "="
 {SLASH} {int x = GET_COLUMN(); INC_COLUMN(yyleng); return TOK(TOK_SLASH, x); }
 {LOG_AND} {int x = GET_COLUMN(); INC_COLUMN(yyleng); return TOK(TOK_LOG_AND, x); }
 {LOG_OR} {int x = GET_COLUMN(); INC_COLUMN(yyleng); return TOK(TOK_LOG_OR, x); }
+{PLUS_ASSIGN} {int x = GET_COLUMN(); INC_COLUMN(yyleng); return TOK(TOK_PLUS_ASSIGN, x); }
+{MINUS_ASSIGN} {int x = GET_COLUMN(); INC_COLUMN(yyleng); return TOK(TOK_MINUS_ASSIGN, x); }
+{STAR_ASSIGN} {int x = GET_COLUMN(); INC_COLUMN(yyleng); return TOK(TOK_STAR_ASSIGN, x); }
+{SLASH_ASSIGN} {int x = GET_COLUMN(); INC_COLUMN(yyleng); return TOK(TOK_SLASH_ASSIGN, x); }
+{TYPE} {int x = GET_COLUMN(); INC_COLUMN(yyleng); return TOK(TOK_TYPE, x, std::string { yytext, static_cast<size_t> (yyleng) }); }
 {IF} {int x = GET_COLUMN(); INC_COLUMN(yyleng); return TOK(TOK_IF, x); }
 {WHILE} {int x = GET_COLUMN(); INC_COLUMN(yyleng); return TOK(TOK_WHILE, x); }
 {FOR} {int x = GET_COLUMN(); INC_COLUMN(yyleng); return TOK(TOK_FOR, x); }

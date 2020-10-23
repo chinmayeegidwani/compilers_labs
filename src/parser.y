@@ -59,6 +59,11 @@ template <typename T, typename... Args> static std::unique_ptr<T> make_node(yy::
 %token TOK_SLASH
 %token TOK_LOG_AND
 %token TOK_LOG_OR
+%token TOK_PLUS_ASSIGN
+%token TOK_MINUS_ASSIGN
+%token TOK_STAR_ASSIGN
+%token TOK_SLASH_ASSIGN
+%token <std::string> TOK_TYPE
 %token TOK_IF
 %token TOK_WHILE
 %token TOK_FOR
@@ -100,7 +105,7 @@ function_defn
 	;
 
 type
-	: TOK_ID { printf("type := identifier  \n"); }
+	: TOK_TYPE { printf("type := TOK_TYPE  \n"); }
 	;
 
 name 
@@ -138,15 +143,19 @@ statement
 single_statement
 	: declaration TOK_ASSIGN expression { printf("single_statement := declaration assign expression \n"); }
 	| name TOK_ASSIGN expression { printf("single_statement := name assign expression \n"); }
-	| name plus_minus_op TOK_ASSIGN expression { printf("single statement := name plus_minus_op assign expression \n"); }
-	| name mul_div_op TOK_ASSIGN expression { printf("single statement := name mul_div assign expression \n"); }
-	| name TOK_LOG_AND TOK_ASSIGN expression { printf("single statement := name TOK_LOG_AND TOK_ASSIGN expression \n"); }
-	| name TOK_LOG_OR TOK_ASSIGN expression { printf("single statement := name TOK_LOG_OR TOK_ASSIGN expression \n"); }
+	| name augmented_assign expression { printf("single_statemen := name augmented_assign expression \n"); }
 	| TOK_BREAK { printf("single_statement := TOK_BREAK \n"); }
 	| TOK_CONTINUE { printf("single_statement := TOK_CONTINUE \n"); }
 	| TOK_RETURN { printf("single_statement := TOK_RETURN \n"); }
 	| TOK_RETURN expression { printf("single_statement := TOK_RETURN expression \n"); }
 	| expression { printf("single_statement := expression \n"); }
+	;
+
+augmented_assign
+	: TOK_PLUS_ASSIGN { printf("augmented_assign := TOK_PLUS_ASSIGN \n"); }
+	| TOK_MINUS_ASSIGN { printf("augmented_assign := TOK_MINUS_ASSIGN \n"); }
+	| TOK_STAR_ASSIGN { printf("augmented_assign := TOK_STAR_ASSIGN \n"); }
+	| TOK_SLASH_ASSIGN { printf("augmented_assign := TOK_SLASH_ASSIGN \n"); }
 	;
 
 compound_statement
@@ -247,6 +256,7 @@ factor
 	| TOK_TRUE { printf("factor := TOK_TRUE  \n"); }
 	| TOK_FALSE { printf("factor := TOK_FALSE \n"); }
 	| TOK_LPAREN expression TOK_RPAREN { printf("factor := TOK_LPAREN expression TOK_RPAREN \n"); }
+	| name
 	| function_call { printf("factor := function_call \n"); }
 	;
 
@@ -256,7 +266,7 @@ function_call
 	;
 
 comma_expression
-	: %empty { printf("comma_expression := %%empty \n"); }
+	: %empty { $$ = make_node<>; }
 	| TOK_COMMA expression comma_expression { printf("comma_expression := TOK_COMMA expression comma_expression \n"); }
 	;
 

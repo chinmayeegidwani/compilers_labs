@@ -39,7 +39,6 @@ static int make_symbol(YYSTYPE*, YYSTYPE);
 
 WS [ \r\t]+
 NL [\n]
-DIGIT [0-9]
 IDENTIFIER [_A-Za-z][_A-Za-z0-9]*
 INTEGER [0-9]+
 FLOAT [0-9]*"."[0-9]+([eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0-9]+|[0-9]+"."([eE][+-]?[0-9]+)?
