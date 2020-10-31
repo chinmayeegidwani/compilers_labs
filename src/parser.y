@@ -77,6 +77,23 @@ template <typename T, typename... Args> static std::unique_ptr<T> make_node(yy::
 %token TOK_ASSIGN
 
 %type <std::unique_ptr<Node>> root
+%type <std::unique_pt<Function>> function
+%type <std::unique_pt<FunctionDeclaration>> function_decl
+%type <std::unique_pt<FunctionDefinition>> function_defn
+%type <std::unique_pt<FunctionList>> function_list
+%type <std::unique_pt<Type>> type
+%type <std::unique_pt<Name>> name
+%type <std::unique_pt<ParameterList>> parameter_list
+%type <std::unique_pt<Block>> block
+%type <std::unique_pt<Type>> type
+%type <std::unique_pt<Name>> name
+%type <std::unique_pt<Declaration>> declaration
+%type <std::unique_pt<Block>> block
+%type <std::unique_pt<Suite>> suite
+%type <std::unique_pt<Statement>> statement
+%type <std::unique_pt<singleStatement>> single_statement
+%type <std::unique_pt<compoundStatement>> compound_statement
+
 
 %start root
 
@@ -87,52 +104,52 @@ root
 	;
 
 function_list
-	: function { printf("function_list := function  \n"); }
-	| function_list function { printf("function_list := function_list function \n"); }
+	: function { $$ = make_node<FunctionList>(@$, $1);}
+	| function_list function {$$= $1; $$->list.push_back($2);}
 	;
 
 function
-	: function_decl TOK_SEMIC { printf("function := function_decl TOK_SEMIC \n"); }
-	| function_defn { printf("function := function_defn \n"); }
+	: function_decl TOK_SEMIC {$$ = $1; }
+	| function_defn { $$ = $1; }
 	;
 
 function_decl
-	: type name TOK_LPAREN parameter_list TOK_RPAREN { printf("function_decl := type name lparen parameter_list rparen \n"); }
+	: type name TOK_LPAREN parameter_list TOK_RPAREN { $$ = make_node<FunctionDeclaration>(@$, $1, $2, $4);}
 	;
 
 function_defn
-	: function_decl block { printf("function_defn := function_decl block \n"); }
+	: function_decl block {$$ = make_node<FunctionDefinition>(@$, $1, $2);}
 	;
 
 type
-	: TOK_TYPE { printf("type := TOK_TYPE  \n"); }
+	: TOK_TYPE {$$ = make_node<Type>(@$, $1) }
 	;
 
 name 
-	: TOK_ID { printf("name := identifier \n"); }
+	: TOK_ID {$$ = make_node<Name>(@$, $1) }
 	;
 
 parameter_list
-	: %empty { printf("parameter_list := %%empty \n"); }
-	| declaration declaration_extra { printf("parameter_list := declaration declaration_extra \n"); }
+	: %empty { $$ = $1; }
+	| declaration declaration_extra {$$ = make_node<ParameterList>(@$, $1);}
 	;
 
 declaration_extra
-	: %empty { printf("declaration_extra := %%empty \n"); }
-	| TOK_COMMA declaration declaration_extra { printf("declaration_extra := TOK_COMMA declaration declaration_extra \n"); }
+	: %empty {$$ = $1; }
+	| TOK_COMMA declaration declaration_extra {$$ = make_node<ParameterList>(@$, $2);}
 	;
 
 block
-	: TOK_LBRACE suite TOK_RBRACE { printf("block := TOK_LBRACE suite TOK_RBRACE \n"); }
+	: TOK_LBRACE suite TOK_RBRACE {$$ = $1; }
 	;
 
 suite
-	: %empty { printf("suite := %%empty \n"); }
-	| statement suite { printf("suite := statement suite \n"); }
+	: %empty {$$ = $1;}
+	| statement suite {$$ = make_node<Suite>(@$, $1);}
 	;
 
 declaration
-	: type name { printf("declaration := type name \n"); }
+	: type name {$$ = make_node<Declaration>(@$, $1, $2); }
 	;
 
 statement
@@ -152,11 +169,11 @@ single_statement
 	;
 
 augmented_assign
-	: TOK_PLUS_ASSIGN { printf("augmented_assign := TOK_PLUS_ASSIGN \n"); }
-	| TOK_MINUS_ASSIGN { printf("augmented_assign := TOK_MINUS_ASSIGN \n"); }
-	| TOK_STAR_ASSIGN { printf("augmented_assign := TOK_STAR_ASSIGN \n"); }
-	| TOK_SLASH_ASSIGN { printf("augmented_assign := TOK_SLASH_ASSIGN \n"); }
-	;
+	: TOK_PLUS_ASSIGN { $$=$1; }
+	| TOK_MINUS_ASSIGN { $$=$1;  }
+	| TOK_STAR_ASSIGN { $$=$1;  }
+	| TOK_SLASH_ASSIGN { $$=$1; }
+	; 
 
 compound_statement
 	: TOK_IF TOK_LPAREN expression TOK_RPAREN block {printf("compound_statement := TOK_IF TOK_LPAREN expression TOK_RPAREN block \n"); }
