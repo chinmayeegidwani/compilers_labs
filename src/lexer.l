@@ -75,7 +75,10 @@ PLUS_ASSIGN "+="
 MINUS_ASSIGN "-="
 STAR_ASSIGN "*="
 SLASH_ASSIGN "/="
-TYPE "int" | "float" | "bool" | "void"
+TYPE_INT "int" 
+TYPE_FLOAT "float" 
+TYPE_BOOL "bool" 
+TYPE_VOID "void"
 
 %%
 
@@ -106,7 +109,10 @@ TYPE "int" | "float" | "bool" | "void"
 {MINUS_ASSIGN} {int x = GET_COLUMN(); INC_COLUMN(yyleng); return TOK(TOK_MINUS_ASSIGN, x); }
 {STAR_ASSIGN} {int x = GET_COLUMN(); INC_COLUMN(yyleng); return TOK(TOK_STAR_ASSIGN, x); }
 {SLASH_ASSIGN} {int x = GET_COLUMN(); INC_COLUMN(yyleng); return TOK(TOK_SLASH_ASSIGN, x); }
-{TYPE} {int x = GET_COLUMN(); INC_COLUMN(yyleng); return TOK(TOK_TYPE, x, std::string { yytext, static_cast<size_t> (yyleng) }); }
+{TYPE_INT} {int x = GET_COLUMN(); INC_COLUMN(yyleng); return TOK(TOK_TYPE_INT, x); }
+{TYPE_FLOAT} {int x = GET_COLUMN(); INC_COLUMN(yyleng); return TOK(TOK_TYPE_FLOAT, x); }
+{TYPE_BOOL} {int x = GET_COLUMN(); INC_COLUMN(yyleng); return TOK(TOK_TYPE_BOOL, x); }
+{TYPE_VOID} {int x = GET_COLUMN(); INC_COLUMN(yyleng); return TOK(TOK_TYPE_VOID, x); }
 {IF} {int x = GET_COLUMN(); INC_COLUMN(yyleng); return TOK(TOK_IF, x); }
 {WHILE} {int x = GET_COLUMN(); INC_COLUMN(yyleng); return TOK(TOK_WHILE, x); }
 {FOR} {int x = GET_COLUMN(); INC_COLUMN(yyleng); return TOK(TOK_FOR, x); }

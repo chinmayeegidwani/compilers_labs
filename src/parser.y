@@ -63,7 +63,10 @@ template <typename T, typename... Args> static std::unique_ptr<T> make_node(yy::
 %token TOK_MINUS_ASSIGN
 %token TOK_STAR_ASSIGN
 %token TOK_SLASH_ASSIGN
-%token <std::string> TOK_TYPE
+%token TOK_TYPE_INT
+%token TOK_TYPE_FLOAT
+%token TOK_TYPE_BOOL
+%token TOK_TYPE_VOID
 %token TOK_IF
 %token TOK_WHILE
 %token TOK_FOR
@@ -77,22 +80,22 @@ template <typename T, typename... Args> static std::unique_ptr<T> make_node(yy::
 %token TOK_ASSIGN
 
 %type <std::unique_ptr<Node>> root
-%type <std::unique_pt<Function>> function
-%type <std::unique_pt<FunctionDeclaration>> function_decl
-%type <std::unique_pt<FunctionDefinition>> function_defn
-%type <std::unique_pt<FunctionList>> function_list
-%type <std::unique_pt<Type>> type
-%type <std::unique_pt<Name>> name
-%type <std::unique_pt<ParameterList>> parameter_list
-%type <std::unique_pt<Block>> block
-%type <std::unique_pt<Type>> type
-%type <std::unique_pt<Name>> name
-%type <std::unique_pt<Declaration>> declaration
-%type <std::unique_pt<Block>> block
-%type <std::unique_pt<Suite>> suite
-%type <std::unique_pt<Statement>> statement
-%type <std::unique_pt<singleStatement>> single_statement
-%type <std::unique_pt<compoundStatement>> compound_statement
+%type <std::unique_ptr<FunctionList>> function_list
+%type <std::unique_ptr<Function>> function
+%type <std::unique_ptr<FunctionDeclaration>> function_decl
+%type <std::unique_ptr<FunctionDefinition>> function_defn
+%type <std::unique_ptr<FunctionList>> function_list
+%type <Type> type
+%type <std::string> name
+%type <std::unique_ptr<ParameterList>> parameter_list
+%type <std::vector<std::unique_ptr<Declaration>>>
+%type <std::unique_ptr<Block>> block
+%type <std::unique_ptr<Declaration>> declaration
+%type <std::unique_ptr<Block>> block
+%type <std::unique_ptr<Suite>> suite
+%type <std::unique_ptr<Statement>> statement
+%type <std::unique_ptr<singleStatement>> single_statement
+%type <std::unique_ptr<compoundStatement>> compound_statement
 %type <std::unique_ptr<Expression>> expression
 %type <std::unique_ptr<Expression>> ternary_expression
 %type <std::unique_ptr<Expression>> or_expression
@@ -112,7 +115,7 @@ template <typename T, typename... Args> static std::unique_ptr<T> make_node(yy::
 %%
 
 root
-	: function_list { printf("root := function_list \n"); }
+	: function_list { $$ = make_node<Root>(@1, $1); }
 	;
 
 function_list
@@ -134,21 +137,24 @@ function_defn
 	;
 
 type
-	: TOK_TYPE {$$ = make_node<Type>(@$, $1) }
+	: TOK_TYPE_INT {$$ = INT; }
+	| TOK_TYPE_FLOAT {$$ = FLOAT; }
+	| TOK_TYPE_BOOL {$$ = LOGICAL; }
+	| TOK_TYPE_VOID {$$ = VOID; }
 	;
 
 name 
-	: TOK_ID {$$ = make_node<Name>(@$, $1) }
+	: TOK_ID {$$ = $1 }
 	;
 
 parameter_list
-	: %empty { $$ = $1; }
-	| declaration declaration_extra {$$ = make_node<ParameterList>(@$, $1);}
+	: %empty {$$ = make_node<ParameterList>(@$); }
+	| declaration declaration_extra {$$ = make_node<ParameterList>(@$); $$ -> paramList = $2; $$ -> paramList.push_back($1); }
 	;
 
 declaration_extra
-	: %empty {$$ = $1; }
-	| TOK_COMMA declaration declaration_extra {$$ = make_node<ParameterList>(@$, $2);}
+	: %empty 
+	| TOK_COMMA declaration declaration_extra {$$ = $3; $$.push_back($2); }
 	;
 
 block
@@ -156,8 +162,8 @@ block
 	;
 
 suite
-	: %empty {$$ = $1;}
-	| statement suite {$$ = make_node<Suite>(@$, $1);}
+	: %empty {$$ = make_node<Suite>(@$); }
+	| statement suite {$$ = $2; $$ -> suiteList.push_back($1)}
 	;
 
 declaration
@@ -291,12 +297,12 @@ factor
 
 function_call
 	: name TOK_LPAREN TOK_RPAREN { $$ = make_node<FunctionCall>(@$, $1); }
-	| name TOK_LPAREN expression comma_expression TOK_RPAREN { $$ = make_node<FunctionCall>(@$, $1); $$ -> args.push_back($3); }
+	| name TOK_LPAREN expression comma_expression TOK_RPAREN { $$ = make_node<FunctionCall>(@$, $1); $$ -> args = $4; $$ -> args.push_back($3); }
 	;
 
 comma_expression
 	: %empty
-	| TOK_COMMA expression comma_expression { $$ -> args.push_back($2); }
+	| TOK_COMMA expression comma_expression { $$ = $3; $$.push_back($2); }
 	;
 
 %%

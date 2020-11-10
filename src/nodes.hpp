@@ -11,19 +11,17 @@ public:
 	virtual ~Node() = 0;
 };
 
-class Root: public Node{
+class Root: public Node {
 	std::unique_ptr<Node> FuncList;
 
-	Root (std::unique_ptr<Node> FunctionList){
-		FuncList = FunctionList;
+	Root (std::unique_ptr<Node> FunctionList) {
+		FuncList = std::move(FunctionList);
 	}
 }
 
-class Function: publicNode{
+class Function: public Node {};
 
-};
-
-class FunctionList: public Node{
+class FunctionList: public Node {
 	std::vector<std::unique_ptr<Function>> list;
 
 	FunctionList(std::unique_ptr<Function> func){
@@ -31,19 +29,17 @@ class FunctionList: public Node{
 	}
 };
 
-class FunctionDeclaration: public Function{
+class FunctionDeclaration: public Function {
 	public:
-		std::unique_ptr<Type> TypeNode;
-		std::unique_ptr<Name> NameNode;
+		Type type;
+		std::string name;
 		std::unique_ptr<ParameterList> ParamList;
 
-		FunctionDefinition(std::unique_ptr<Type> type, std::unique_ptr<Name> name, std::unique_ptr<ParameterList> param_list){
-			TypeNode = std::move(type);
-			NameNode = std::move(name);
-			ParamList = std::move(param_list);
+		FunctionDefinition(Type t, std::string n, std::unique_ptr<ParameterList> param_list){
+			type = t;
+			name = n;
+			paramList = std::move(param_list);
 		}
-
-
 };
 
 class FunctionDefinition: public Function{
@@ -57,55 +53,32 @@ class FunctionDefinition: public Function{
 		}
 };
 
-class Type: public Node{
-	public:
-		std::unique_ptr<Node> TypeNode;
-
-		Type(std::unique_ptr<Node>type){
-			TypeNode = std::move(type);
-		}
-}
-
-class Name: public Node{
-	public:
-		std::unique_ptr<Node> NameNode;
-
-		Type(std::unique_ptr<Node>name){
-			NameNode = std::move(type);
-		}
-}
+enum Type {VOID, INT, FLOAT, LOGICAL};
 
 class ParameterList: public Node{
 	public:
-		std::vector<std::unique_ptr<Declaration>> ParamList;
+		std::vector<std::unique_ptr<Declaration>> paramList;
 
-		ParameterList(std::unique_ptr<Declaration> declaration){
-			ParamList.push_back(std::move(declaration));
-			//ParamList.push_back(std::move(declaration_extra));
-		}
+		ParameterList(){}
 }
 
-class Block: public Node{
-
-}
+class Block: public Node {}
 
 class Suite: public Block{
 	public:
-		std::vector<std::unique_ptr<Statement>> SuiteList;
+		std::vector<std::unique_ptr<Statement>> suiteList;
 
-		Suite(std::unique_ptr<Statement> statement){
-			SuiteList.push_back(std::move(statement));
-		}
+		Suite(){}
 }
 
 class Declaration: public Node{
 	public:
-		std::unique_ptr<Type> TypeNode;
-		std::unique_ptr<Name> NameNode;
+		Type type;
+		std::string name;
 
-		Declaration(std::unique_ptr<Type> type; std::unique_ptr<Name> name;){
-			TypeNode = std::move(type);
-			NameNode = std::move(name);
+		Declaration(Type t; std::string n;){
+			type = t;
+			name = n;
 		}
 }
 
@@ -281,8 +254,8 @@ public:
 	string n;
 	std::vector<std::unique_ptr<Expression>>  args;
 
-	FunctionCall(std::unique_ptr<Node> arg) {
-		n = arg -> name;
+	FunctionCall(std::string arg) {
+		n = arg;
 	}
 }
 
