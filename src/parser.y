@@ -77,6 +77,21 @@ template <typename T, typename... Args> static std::unique_ptr<T> make_node(yy::
 %token TOK_ASSIGN
 
 %type <std::unique_ptr<Node>> root
+%type <std::unique_ptr<Expression>> expression
+%type <std::unique_ptr<Expression>> ternary_expression
+%type <std::unique_ptr<Expression>> or_expression
+%type <std::unique_ptr<Expression>> and_expression
+%type <EqOp> eq_op
+%type <std::unique_ptr<Expression>> eq_expression
+%type <CompOp> comp_op
+%type <std::unique_ptr<Expression>> comp_expression
+%type <PlusOp> plus_minus_op
+%type <std::unqiue_ptr<Expression>> plus_expression
+%type <MulOp> mul_div_op
+%type <std::unique_ptr<Expression>> mul_expression
+%type <std::unique_ptr<Expression>> term
+%type <std::unique_ptr<Expression>> factor
+%type <std::unique_ptr<Expression>> function_call
 
 %start root
 
@@ -184,90 +199,90 @@ compound_statement
 	; 
 
 expression
-	: ternary_expression { printf("expression := ternary_expression \n"); }
+	: ternary_expression { $$ = $1; }
 	;
 
 ternary_expression
-	: or_expression TOK_QM ternary_expression TOK_COLON ternary_expression { printf("ternary_expression := or_expression TOK_QM \
-										ternary_expression TOK_COLON ternary_expression \n"); }
-	| or_expression { printf("ternary_expression := or_expression \n"); }
+	: or_expression TOK_QM ternary_expression TOK_COLON ternary_expression { $$ = make_node<TernaryExpression>(@$, $1, $2, $3); }
+	| or_expression { $$ = $1; }
 	;
 
 or_expression
-	: or_expression TOK_LOG_OR and_expression { printf("or_expression := or_expression TOK_LOG_OR and_expression \n"); }
-	| and_expression { printf("or_expression := and_expression \n"); }
+	: or_expression TOK_LOG_OR and_expression { $$ = make_node<OrExpression>(@$, $1, $2); }
+	| and_expression { $$ = $1; }
 	;
 
 and_expression
-	: and_expression TOK_LOG_AND eq_expression { printf("and_expression := and_expression TOK_LOG_AND eq_expression \n"); }
-	| eq_expression { printf("and_expression := eq_expression \n"); }
+	: and_expression TOK_LOG_AND eq_expression { $$ = make_node<AndExpression>(@$, $1, $2); }
+	| eq_expression { $$ = $1; }
 	;
 
 eq_expression
-	: eq_expression eq_op comp_expression { printf("eq_expression := eq_expression eq_op comp_expression \n"); }
-	| comp_expression { printf("eq_expression := comp_expression \n"); }
+	: eq_expression eq_op comp_expression { $$ = make_node<EqExpression>(@$, $1, $3, $2); }
+	| comp_expression { $$ = $1; }
 	;
+
 eq_op
-	: TOK_NE { printf("eq_op := TOK_NE \n"); }
-	| TOK_EQ { printf("eq_op := TOK_EQ \n"); }
+	: TOK_NE { $$ = NE; }
+	| TOK_EQ { $$ = EQ; }
 	;
 
 comp_expression
-	: comp_expression comp_op plus_expression { printf("comp_expression := comp_expression comp_op plus_expression \n"); }
-	| plus_expression { printf("comp_expression := plus_expression \n"); }
+	: comp_expression comp_op plus_expression { $$ = make_node<CompExpression>(@$, $1, $3, $2); }
+	| plus_expression { $$ = $1; }
 	;
 
 comp_op
-	: TOK_GE { printf("comp_op := TOK_GE \n"); }
-	| TOK_LE { printf("comp_op := TOK_LE \n"); }
-	| TOK_LT { printf("comp_op := TOK_LT \n"); }
-	| TOK_GT { printf("comp_op := TOK_GT \n"); }
+	: TOK_GE { $$ = GE; }
+	| TOK_LE { $$ = LE; }
+	| TOK_LT { $$ = LT; }
+	| TOK_GT { $$ = GT; }
 	;
 
 plus_expression
-	: plus_expression plus_minus_op mul_expression { printf("plus_expression := plus_expression plus_minus_op mul_expression \n"); }
-	| mul_expression { printf("plus_expression := mul_expression  \n"); }
+	: plus_expression plus_minus_op mul_expression { $$ = make_node<PlusExpression>(@$, $1, $3, $2); }
+	| mul_expression { $$ = $1; }
 	;
 
 plus_minus_op
-	: TOK_PLUS { printf("plus_minus_op := TOK_PLUS \n"); }
-	| TOK_MINUS { printf("plus_minus_op := TOK_MINUS \n"); }
+	: TOK_PLUS { $$ = PLUS; }
+	| TOK_MINUS { $$ = MINUS; }
 	;
 
 mul_expression
-	: mul_expression mul_div_op term { printf("mul_expression := mul_expression mul_div_op term \n"); }
-	| term { printf("mul_expression := term \n"); }
+	: mul_expression mul_div_op term { $$ = make_node<MulExpression>(@$, $1, $3, $2); }
+	| term { $$ = $1; }
 	;
 
 mul_div_op
-	: TOK_STAR { printf("mul_div_op := TOK_STAR \n"); }
-	| TOK_SLASH { printf("mul_div_op := TOK_SLASH \n"); }
+	: TOK_STAR { $$ = MUL; }
+	| TOK_SLASH { $$ = DIV; }
 	;
 
 term
-	: TOK_LPAREN type TOK_RPAREN term { printf("term := TOK_LPAREN type TOK_RPAREN cast_expression \n"); }
-	| TOK_MINUS term { printf("term := TOK_MINUS factor \n"); }
-	| factor { printf("term := factor \n"); }
+	: TOK_LPAREN type TOK_RPAREN term { $$ = make_node<CastExpression>(@$, $2, $4); }
+	| TOK_MINUS term { $$ = make_node<UnaryMinusExpression>(@$, $2); }
+	| factor { $$ = $1; }
 	;
 
 factor
-	: TOK_INT { printf("factor := TOK_INT \n"); }
-	| TOK_FLOAT { printf("factor := TOK_FLOAT  \n"); }
-	| TOK_TRUE { printf("factor := TOK_TRUE  \n"); }
-	| TOK_FALSE { printf("factor := TOK_FALSE \n"); }
-	| TOK_LPAREN expression TOK_RPAREN { printf("factor := TOK_LPAREN expression TOK_RPAREN \n"); }
-	| name
-	| function_call { printf("factor := function_call \n"); }
+	: TOK_INT { $$ = make_node<Int>(@$, $1); }
+	| TOK_FLOAT { $$ = make_node<Float>(@$, $1); }
+	| TOK_TRUE { $$ = make_node<Bool>(@$, true); }
+	| TOK_FALSE { $$ = make_node<Bool>(@$, true); }
+	| TOK_LPAREN expression TOK_RPAREN { $$ = $2; }
+	| name {$$ = make_node<NameExpression>(@$, $1); }
+	| function_call { $$ = $1; }
 	;
 
 function_call
-	: name TOK_LPAREN TOK_RPAREN { printf("function_call := name lparen (expression (comma expression)*)? rparen \n"); }
-	| name TOK_LPAREN expression comma_expression TOK_RPAREN { printf("function_call := name lparen (expression (comma expression)*)? rparen \n"); }
+	: name TOK_LPAREN TOK_RPAREN { $$ = make_node<FunctionCall>(@$, $1); }
+	| name TOK_LPAREN expression comma_expression TOK_RPAREN { $$ = make_node<FunctionCall>(@$, $1); $$ -> args.push_back($3); }
 	;
 
 comma_expression
-	: %empty { $$ = make_node<>; }
-	| TOK_COMMA expression comma_expression { printf("comma_expression := TOK_COMMA expression comma_expression \n"); }
+	: %empty
+	| TOK_COMMA expression comma_expression { $$ -> args.push_back($2); }
 	;
 
 %%

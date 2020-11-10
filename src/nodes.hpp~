@@ -166,11 +166,11 @@ class NameExpression : public Expression {
 
 class FunctionCall : public Expression {
 public:
-	string n;
+	std::unique_ptr<Node> n;
 	std::vector<std::unique_ptr<Expression>>  args;
 
-	FunctionCall(std::unique_ptr<Node> arg) {
-		n = arg -> name;
+	FunctionCall(std::unique_ptr<Node> name) {
+		n = std::move(name);
 	}
 }
 
