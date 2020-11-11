@@ -182,7 +182,7 @@ class Continue: public Node {};
 class ReturnVoid: public Node {};
 
 class ReturnNotVoid: public Node {
-public
+public:
 	std::unique_ptr<Expression> expr;
 
 	ReturnNotVoid(std::unique_ptr<Expression> expression) {
@@ -255,7 +255,7 @@ public:
 	}
 };
 
-class AndExpression : public Node {
+class AndExpression : public Expression {
 public:
 	std::unique_ptr<Expression> aExpression;
 	std::unique_ptr<Expression> eqExpression;
@@ -266,7 +266,7 @@ public:
 	}	
 };
 
-class EqExpression : public Node {
+class EqExpression : public Expression {
 public:
 	std::unique_ptr<Expression> eqExpression;
 	std::unique_ptr<Expression> cExpression;

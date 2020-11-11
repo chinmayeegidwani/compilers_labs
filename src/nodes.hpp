@@ -255,7 +255,7 @@ public:
 	}
 };
 
-class AndExpression : public Node {
+class AndExpression : public Expression {
 public:
 	std::unique_ptr<Expression> aExpression;
 	std::unique_ptr<Expression> eqExpression;
@@ -266,7 +266,7 @@ public:
 	}	
 };
 
-class EqExpression : public Node {
+class EqExpression : public Expression {
 public:
 	std::unique_ptr<Expression> eqExpression;
 	std::unique_ptr<Expression> cExpression;
@@ -350,6 +350,7 @@ public:
 };
 
 class Float : public Expression {
+public:
 	float data;
 
 	Float(float arg) {
@@ -367,6 +368,7 @@ public:
 };
 
 class NameExpression : public Expression {
+public:
 	std::string name;
 
 	NameExpression (std::string arg) {

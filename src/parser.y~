@@ -109,7 +109,7 @@ template <typename T, typename... Args> static std::unique_ptr<T> make_node(yy::
 %type <std::unique_ptr<Expression>> mul_expression
 %type <std::unique_ptr<Expression>> term
 %type <std::unique_ptr<Expression>> factor
-%type <std::unique_ptr<Expression>> function_call
+%type <std::unique_ptr<FunctionCall>> function_call
 %type <std::unique_ptr<std::vector<std::unique_ptr<Expression>>>> comma_expression
 %%
 
@@ -154,7 +154,7 @@ parameter_list
 declaration_extra
 	: %empty {$$ = std::make_unique<std::vector<std::unique_ptr<Declaration>>>(); }
 	| TOK_COMMA declaration declaration_extra {$$ = $3; (*$$).push_back($2); }
-	;ƒ
+	;
 
 block
 	: TOK_LBRACE suite TOK_RBRACE {$$ = $2; }
@@ -230,7 +230,7 @@ eq_expression
 	;
 
 eq_op
-	: TOK_NE { $$ = NE; }
+	: TOK_NE { $$ = NEQ; }
 	| TOK_EQ { $$ = EQ; }
 	;
 
@@ -289,7 +289,7 @@ function_call
 
 comma_expression
 	: %empty {std::make_unique<std::vector<std::unique_ptr<Expression>>>(); }
-	| TOK_COMMA expression comma_expression { $$ = $3; *($$).push_back($2); }
+	| TOK_COMMA expression comma_expression { $$ = $3; (*$$).push_back($2); }
 	;
 
 %%

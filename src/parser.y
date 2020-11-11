@@ -109,7 +109,7 @@ template <typename T, typename... Args> static std::unique_ptr<T> make_node(yy::
 %type <std::unique_ptr<Expression>> mul_expression
 %type <std::unique_ptr<Expression>> term
 %type <std::unique_ptr<Expression>> factor
-%type <std::unique_ptr<Expression>> function_call
+%type <std::unique_ptr<FunctionCall>> function_call
 %type <std::unique_ptr<std::vector<std::unique_ptr<Expression>>>> comma_expression
 %%
 
@@ -230,7 +230,7 @@ eq_expression
 	;
 
 eq_op
-	: TOK_NE { $$ = NE; }
+	: TOK_NE { $$ = NEQ; }
 	| TOK_EQ { $$ = EQ; }
 	;
 
@@ -284,12 +284,12 @@ factor
 
 function_call
 	: name TOK_LPAREN TOK_RPAREN { $$ = make_node<FunctionCall>(@$, $1); }
-	| name TOK_LPAREN expression comma_expression TOK_RPAREN { $$ = make_node<FunctionCall>(@$, $1); $$ -> args = $4; *($$ -> args).push_back($3); }
+	| name TOK_LPAREN expression comma_expression TOK_RPAREN { $$ = make_node<FunctionCall>(@$, $1); $$ -> args = $4; (*($$ -> args)).push_back($3); }
 	;
 
 comma_expression
 	: %empty {std::make_unique<std::vector<std::unique_ptr<Expression>>>(); }
-	| TOK_COMMA expression comma_expression { $$ = $3; *($$).push_back($2); }
+	| TOK_COMMA expression comma_expression { $$ = $3; (*$$).push_back($2); }
 	;
 
 %%
