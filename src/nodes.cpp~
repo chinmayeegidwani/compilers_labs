@@ -1,0 +1,14 @@
+#include "nodes.hpp"
+
+Node::~Node() = default;
+
+FunctionDefinition::FunctionDefinition(Type t, std::string n, std::unique_ptr<ParameterList> param_list){
+	type = t;
+	name = n;
+	paramList = std::move(param_list);
+}
+
+FunctionDefinition(std::unique_ptr<FunctionDeclaration> function_decl, std::unique_ptr<Block> block){
+	funcDecl = std::move(function_decl);
+	blockNode = std::move(block);
+}

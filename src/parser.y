@@ -80,7 +80,6 @@ template <typename T, typename... Args> static std::unique_ptr<T> make_node(yy::
 %token TOK_ASSIGN
 
 %type <std::unique_ptr<Node>> root
-%type <std::unique_ptr<FunctionList>> function_list
 %type <std::unique_ptr<Function>> function
 %type <std::unique_ptr<FunctionDeclaration>> function_decl
 %type <std::unique_ptr<FunctionDefinition>> function_defn
@@ -92,7 +91,7 @@ template <typename T, typename... Args> static std::unique_ptr<T> make_node(yy::
 %type <std::unique_ptr<Block>> block
 %type <std::unique_ptr<Declaration>> declaration
 %type <std::unique_ptr<Suite>> suite
-%type <std::unique_ptr<Statement>> statement
+%type <std::unique_ptr<Node>> statement
 %type <std::unique_ptr<Node>> single_statement
 %type <AugmentedAssignOp> augmented_assign
 %type <std::unique_ptr<CompoundStatement>> compound_statement
@@ -105,13 +104,13 @@ template <typename T, typename... Args> static std::unique_ptr<T> make_node(yy::
 %type <CompOp> comp_op
 %type <std::unique_ptr<Expression>> comp_expression
 %type <PlusOp> plus_minus_op
-%type <std::unqiue_ptr<Expression>> plus_expression
+%type <std::unique_ptr<Expression>> plus_expression
 %type <MulOp> mul_div_op
 %type <std::unique_ptr<Expression>> mul_expression
 %type <std::unique_ptr<Expression>> term
 %type <std::unique_ptr<Expression>> factor
 %type <std::unique_ptr<Expression>> function_call
-
+%type <std::unique_ptr<std::vector<std::unique_ptr<Expression>>>> comma_expression
 %%
 
 root
@@ -144,26 +143,26 @@ type
 	;
 
 name 
-	: TOK_ID {$$ = $1 }
+	: TOK_ID {$$ = $1; }
 	;
 
 parameter_list
 	: %empty {$$ = make_node<ParameterList>(@$); }
-	| declaration declaration_extra {$$ = make_node<ParameterList>(@$); $$ -> paramList = $2; *($$ -> paramList).push_back($1); }
+	| declaration declaration_extra {$$ = make_node<ParameterList>(@$); $$ -> paramList = $2; (*($$ -> paramList)).push_back($1); }
 	;
 
 declaration_extra
-	: %empty {$$ = std::make_unique<std::vector<std::unique_ptr<Declaration>>>; }
-	| TOK_COMMA declaration declaration_extra {$$ = $3; *($$).push_back($2); }
+	: %empty {$$ = std::make_unique<std::vector<std::unique_ptr<Declaration>>>(); }
+	| TOK_COMMA declaration declaration_extra {$$ = $3; (*$$).push_back($2); }
 	;
 
 block
-	: TOK_LBRACE suite TOK_RBRACE {$$ = $1; }
+	: TOK_LBRACE suite TOK_RBRACE {$$ = $2; }
 	;
 
 suite
 	: %empty {$$ = make_node<Suite>(@$); }
-	| statement suite {$$ = $2; $$ -> suiteList.push_back($1)}
+	| statement suite {$$ = $2; $$ -> suiteList.push_back($1); }
 	;
 
 declaration
@@ -187,10 +186,10 @@ single_statement
 	;
 
 augmented_assign
-	: TOK_PLUS_ASSIGN { $$=$1; }
-	| TOK_MINUS_ASSIGN { $$=$1;  }
-	| TOK_STAR_ASSIGN { $$=$1;  }
-	| TOK_SLASH_ASSIGN { $$=$1; }
+	: TOK_PLUS_ASSIGN { $$ = PLUS_ASSIGN; }
+	| TOK_MINUS_ASSIGN { $$ = MINUS_ASSIGN;  }
+	| TOK_STAR_ASSIGN { $$= STAR_ASSIGN;  }
+	| TOK_SLASH_ASSIGN { $$ = SLASH_ASSIGN; }
 	; 
 
 compound_statement
@@ -200,7 +199,7 @@ compound_statement
 	| TOK_FOR TOK_LPAREN TOK_SEMIC expression TOK_SEMIC TOK_RPAREN block {$$ = make_node<For>(@$, nullptr, nullptr, $4, $7); }
 	| TOK_FOR TOK_LPAREN TOK_SEMIC TOK_SEMIC single_statement TOK_RPAREN block {$$ = make_node<For>(@$, nullptr, $5, nullptr, $7); }
 	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC expression TOK_SEMIC TOK_RPAREN block {$$ = make_node<For>(@$, $3, nullptr, $5, $8); }
-	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC TOK_SEMIC single_statement TOK_RPAREN block {$$ = make_node<For(@$, $3, $6, nullptr, $8)>; }
+	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC TOK_SEMIC single_statement TOK_RPAREN block {$$ = make_node<For>(@$, $3, $6, nullptr, $8); }
 	| TOK_FOR TOK_LPAREN TOK_SEMIC expression TOK_SEMIC single_statement TOK_RPAREN block {$$ = make_node<For>(@$, nullptr, $6, $4, $8); }
 	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC expression TOK_SEMIC single_statement TOK_RPAREN block {$$ = make_node<For>(@$, $3, $7, $5, $9); }
 	| TOK_WHILE TOK_LPAREN expression TOK_RPAREN block {$$ = make_node<While>(@$, $3, $5); }
@@ -211,17 +210,17 @@ expression
 	;
 
 ternary_expression
-	: or_expression TOK_QM ternary_expression TOK_COLON ternary_expression { $$ = make_node<TernaryExpression>(@$, $1, $2, $3); }
+	: or_expression TOK_QM ternary_expression TOK_COLON ternary_expression { $$ = make_node<TernaryExpression>(@$, $1, $3, $5); }
 	| or_expression { $$ = $1; }
 	;
 
 or_expression
-	: or_expression TOK_LOG_OR and_expression { $$ = make_node<OrExpression>(@$, $1, $2); }
+	: or_expression TOK_LOG_OR and_expression { $$ = make_node<OrExpression>(@$, $1, $3); }
 	| and_expression { $$ = $1; }
 	;
 
 and_expression
-	: and_expression TOK_LOG_AND eq_expression { $$ = make_node<AndExpression>(@$, $1, $2); }
+	: and_expression TOK_LOG_AND eq_expression { $$ = make_node<AndExpression>(@$, $1, $3); }
 	| eq_expression { $$ = $1; }
 	;
 
@@ -289,7 +288,7 @@ function_call
 	;
 
 comma_expression
-	: %empty {std::make_unique<std::vector<std::unique_ptr<Expression>>>}
+	: %empty {std::make_unique<std::vector<std::unique_ptr<Expression>>>(); }
 	| TOK_COMMA expression comma_expression { $$ = $3; *($$).push_back($2); }
 	;
 
