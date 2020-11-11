@@ -57,7 +57,7 @@ enum Type {VOID, INT, FLOAT, LOGICAL};
 
 class ParameterList: public Node{
 	public:
-		std::vector<std::unique_ptr<Declaration>> paramList;
+		std::unique_ptr<std::vector<std::unique_ptr<Declaration>>> paramList;
 
 		ParameterList(){}
 }
@@ -82,19 +82,90 @@ class Declaration: public Node{
 		}
 }
 
-class Statement: public Node{
-	//empty class
-}
-
-
-class singleStatement: public Statement{
-
-}
-
-class compoundStatement: public Statement{
-
+class DeclarationAssign: public Node {
+	std::unique_ptr<Declaration> decl;
+	std::unique_ptr<Expression> expr;
+	
+	DeclarationAssign(std::unique_ptr<Declaration> declaration, std::unique_ptr<Expression> expression){
+		decl = declaration;
+		expr = expression;
+	}
 
 };
+
+class SimpleAssign: public Node {
+	std::string n;
+	std::unique_ptr<Expression> expr;
+
+	SimpleAssign(std::string name, std::unique_ptr<Expression> expression) {
+		n = name;
+		expr = std::move(expression);
+	}
+};
+
+class AugmentedAssign: public Node {
+	std::string n;
+	std::unique_ptr<Expression> expr;
+	AugmentedAssignOp op;
+
+	AugmentedAssign(std::string name, std::unique_ptr<Expression> expression, AugmentedAssignOp operation) {
+		n = name;
+		expr = std::move(expression);
+		op = operation;
+	}
+};
+
+enum AugmentedAssignOp {PLUS_ASSIGN, MINUS_ASSIGN, STAR_ASSIGN, SLASH_ASSIGN};
+
+class Break: public Node {};
+
+class Continue: public Node {};
+
+class ReturnVoid: public Node {};
+
+class ReturnNotVoid: public Node {
+	std::unique_ptr<Expression> expr;
+
+	ReturnNotVoid(std::unique_ptr<Expression> expression) {
+		expr = std::move(expression);
+	}
+};
+
+class CompoundStatement: public Node {};
+
+class If: public CompoundStatement {
+	std::unique_ptr<Expression> expr;
+	std::unique_ptr<Block> b;
+	
+	If(std::unique_ptr<Expression> expression, std::unique_ptr<Block> block) {
+		expr = std::move(expression);
+		b = std::move(block);
+	}
+};
+
+class For: public CompoundStatement {
+	std::unique_ptr<Node> s1;
+	std::unique_ptr<Expression> expr;
+	std::unique_ptr<Node> s2;
+	std::unique_ptr<Block> b;
+
+	For(std::unique_ptr<Node> statement1, std::unique_ptr<Node> statement2, std::unique_ptr<Node> expression, std::unique_ptr<Block> block) {
+		s1 = std::move(statement1);
+		s2 = std::move(statement2);
+		expr = std::move(expression);
+		b = std::move(block);
+	}
+};
+
+class While: public CompoundStatement {
+	std::unique_ptr<Expression> expr;
+	std::unique_ptr<Block> b;
+	
+	While(std::unique_ptr<Expression> expression, std::unique_ptr<Block> block) {
+		expr = std::move(expression);
+		b = std::move(block);
+	}
+}
 
 class Expression : public Node {};
 

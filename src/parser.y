@@ -88,14 +88,14 @@ template <typename T, typename... Args> static std::unique_ptr<T> make_node(yy::
 %type <Type> type
 %type <std::string> name
 %type <std::unique_ptr<ParameterList>> parameter_list
-%type <std::vector<std::unique_ptr<Declaration>>>
+%type <std::unique_ptr<std::vector<std::unique_ptr<Declaration>>>> declaration_extra
 %type <std::unique_ptr<Block>> block
 %type <std::unique_ptr<Declaration>> declaration
-%type <std::unique_ptr<Block>> block
 %type <std::unique_ptr<Suite>> suite
 %type <std::unique_ptr<Statement>> statement
-%type <std::unique_ptr<singleStatement>> single_statement
-%type <std::unique_ptr<compoundStatement>> compound_statement
+%type <std::unique_ptr<Node>> single_statement
+%type <AugmentedAssignOp> augmented_assign
+%type <std::unique_ptr<CompoundStatement>> compound_statement
 %type <std::unique_ptr<Expression>> expression
 %type <std::unique_ptr<Expression>> ternary_expression
 %type <std::unique_ptr<Expression>> or_expression
@@ -149,12 +149,12 @@ name
 
 parameter_list
 	: %empty {$$ = make_node<ParameterList>(@$); }
-	| declaration declaration_extra {$$ = make_node<ParameterList>(@$); $$ -> paramList = $2; $$ -> paramList.push_back($1); }
+	| declaration declaration_extra {$$ = make_node<ParameterList>(@$); $$ -> paramList = $2; *($$ -> paramList).push_back($1); }
 	;
 
 declaration_extra
-	: %empty 
-	| TOK_COMMA declaration declaration_extra {$$ = $3; $$.push_back($2); }
+	: %empty {$$ = std::make_unique<std::vector<std::unique_ptr<Declaration>>>; }
+	| TOK_COMMA declaration declaration_extra {$$ = $3; *($$).push_back($2); }
 	;
 
 block
@@ -171,19 +171,19 @@ declaration
 	;
 
 statement
-	: single_statement TOK_SEMIC { printf("statement := single_statement TOK_SEMIC \n"); }
-	| compound_statement { printf("statement := compound_statement \n"); }
+	: single_statement TOK_SEMIC { $$ = $1; }
+	| compound_statement { $$ = $1; }
 	;
 
 single_statement
-	: declaration TOK_ASSIGN expression { printf("single_statement := declaration assign expression \n"); }
-	| name TOK_ASSIGN expression { printf("single_statement := name assign expression \n"); }
-	| name augmented_assign expression { printf("single_statemen := name augmented_assign expression \n"); }
-	| TOK_BREAK { printf("single_statement := TOK_BREAK \n"); }
-	| TOK_CONTINUE { printf("single_statement := TOK_CONTINUE \n"); }
-	| TOK_RETURN { printf("single_statement := TOK_RETURN \n"); }
-	| TOK_RETURN expression { printf("single_statement := TOK_RETURN expression \n"); }
-	| expression { printf("single_statement := expression \n"); }
+	: declaration TOK_ASSIGN expression { $$ = make_node<DeclarationAssign>(@$, $1, $3); }
+	| name TOK_ASSIGN expression { $$ = make_node<SimpleAssign>(@$, $1, $3); }
+	| name augmented_assign expression { $$ = make_node<AugmentedAssign>(@$, $1, $3, $2); }
+	| TOK_BREAK { $$ = make_node<Break>(@$); }
+	| TOK_CONTINUE { $$ = make_node<Continue>(@$); }
+	| TOK_RETURN { $$ = make_node<ReturnVoid>(@$); }
+	| TOK_RETURN expression { $$ = make_node<ReturnNotVoid>(@$, $2); }
+	| expression { $$ = $1; }
 	;
 
 augmented_assign
@@ -194,28 +194,16 @@ augmented_assign
 	; 
 
 compound_statement
-	: TOK_IF TOK_LPAREN expression TOK_RPAREN block {printf("compound_statement := TOK_IF TOK_LPAREN expression TOK_RPAREN block \n"); }
-	| TOK_FOR TOK_LPAREN TOK_SEMIC TOK_SEMIC TOK_RPAREN block {printf("compound_statement := TOK_FOR TOK_LPAREN single_statement? \
-							TOK_SEMIC expression? TOK_SEMIC single_statement? TOK_RPAREN block \n"); }
-	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC TOK_SEMIC TOK_RPAREN block {printf("compound_statement := TOK_FOR TOK_LPAREN single_statement? \
-							TOK_SEMIC expression? TOK_SEMIC single_statement? TOK_RPAREN block \n"); }
-	| TOK_FOR TOK_LPAREN TOK_SEMIC expression TOK_SEMIC TOK_RPAREN block {printf("compound_statement := TOK_FOR TOK_LPAREN single_statement? \
-							TOK_SEMIC expression? TOK_SEMIC single_statement? TOK_RPAREN block \n"); }
-	| TOK_FOR TOK_LPAREN TOK_SEMIC TOK_SEMIC single_statement TOK_RPAREN block {printf("compound_statement := TOK_FOR TOK_LPAREN single_statement? \
-							TOK_SEMIC expression? TOK_SEMIC single_statement? TOK_RPAREN block \n"); }
-	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC expression TOK_SEMIC TOK_RPAREN block {printf("compound_statement := TOK_FOR \
-												TOK_LPAREN single_statement? TOK_SEMIC expression? \
-												TOK_SEMIC single_statement? TOK_RPAREN block \n"); }
-	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC TOK_SEMIC single_statement TOK_RPAREN block {printf("compound_statement := TOK_FOR \
-												TOK_LPAREN single_statement? TOK_SEMIC expression? \
-												TOK_SEMIC single_statement? TOK_RPAREN block \n"); }
-	| TOK_FOR TOK_LPAREN TOK_SEMIC expression TOK_SEMIC single_statement TOK_RPAREN block {printf("compound_statement := TOK_FOR \
-												TOK_LPAREN single_statement? TOK_SEMIC expression? \
-												TOK_SEMIC single_statement? TOK_RPAREN block \n"); }
-	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC expression TOK_SEMIC single_statement TOK_RPAREN block {printf("compound_statement := TOK_FOR \
-												TOK_LPAREN single_statement? TOK_SEMIC expression? \
-												TOK_SEMIC single_statement? TOK_RPAREN block \n"); }
-	| TOK_WHILE TOK_LPAREN expression TOK_RPAREN block {printf("compound_statement := TOK_WHILE TOK_LPAREN expression TOK_RPAREN block \n"); }
+	: TOK_IF TOK_LPAREN expression TOK_RPAREN block {$$ = make_node<If>(@$, $3, $5); }
+	| TOK_FOR TOK_LPAREN TOK_SEMIC TOK_SEMIC TOK_RPAREN block {$$ = make_node<For>(@$, nullptr, nullptr, nullptr, $6); }
+	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC TOK_SEMIC TOK_RPAREN block {$$ = make_node<For>(@$, $3, nullptr, nullptr, $7); }
+	| TOK_FOR TOK_LPAREN TOK_SEMIC expression TOK_SEMIC TOK_RPAREN block {$$ = make_node<For>(@$, nullptr, nullptr, $4, $7); }
+	| TOK_FOR TOK_LPAREN TOK_SEMIC TOK_SEMIC single_statement TOK_RPAREN block {$$ = make_node<For>(@$, nullptr, $5, nullptr, $7); }
+	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC expression TOK_SEMIC TOK_RPAREN block {$$ = make_node<For>(@$, $3, nullptr, $5, $8); }
+	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC TOK_SEMIC single_statement TOK_RPAREN block {$$ = make_node<For(@$, $3, $6, nullptr, $8)>; }
+	| TOK_FOR TOK_LPAREN TOK_SEMIC expression TOK_SEMIC single_statement TOK_RPAREN block {$$ = make_node<For>(@$, nullptr, $6, $4, $8); }
+	| TOK_FOR TOK_LPAREN single_statement TOK_SEMIC expression TOK_SEMIC single_statement TOK_RPAREN block {$$ = make_node<For>(@$, $3, $7, $5, $9); }
+	| TOK_WHILE TOK_LPAREN expression TOK_RPAREN block {$$ = make_node<While>(@$, $3, $5); }
 	; 
 
 expression
@@ -297,12 +285,12 @@ factor
 
 function_call
 	: name TOK_LPAREN TOK_RPAREN { $$ = make_node<FunctionCall>(@$, $1); }
-	| name TOK_LPAREN expression comma_expression TOK_RPAREN { $$ = make_node<FunctionCall>(@$, $1); $$ -> args = $4; $$ -> args.push_back($3); }
+	| name TOK_LPAREN expression comma_expression TOK_RPAREN { $$ = make_node<FunctionCall>(@$, $1); $$ -> args = $4; *($$ -> args).push_back($3); }
 	;
 
 comma_expression
-	: %empty
-	| TOK_COMMA expression comma_expression { $$ = $3; $$.push_back($2); }
+	: %empty {std::make_unique<std::vector<std::unique_ptr<Expression>>>}
+	| TOK_COMMA expression comma_expression { $$ = $3; *($$).push_back($2); }
 	;
 
 %%
