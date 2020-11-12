@@ -11,19 +11,8 @@ typedef enum Type Type;
 enum AugmentedAssignOp {PLUS_ASSIGN, MINUS_ASSIGN, STAR_ASSIGN, SLASH_ASSIGN};
 typedef enum AugmentedAssignOp AugmentedAssignOp;
 
-enum EqOp {EQ, NEQ};
-typedef enum EqOp EqOp;
-
-enum CompOp {GT, GE, LT, LE};
-typedef enum CompOp CompOp;
-
-enum PlusOp {PLUS, MINUS};
-typedef enum PlusOp PlusOp;
-
-enum MulOp {MUL, DIV};
-typedef enum MulOp MulOp;
-
-
+enum BinaryOp {PLUS, MINUS, MUL, DIV, AND, OR, EQ, NEQ, LT, GT, LE, GE}
+typedef enum BinaryOp BinaryOp;
 
 class Node;
 class Root;
@@ -48,11 +37,7 @@ class For;
 class While;
 class Expression;
 class TernaryExpression;
-class OrExpression;
-class AndExpression;
-class EqExpression;
-class PlusExpression;
-class MulExpression;
+class BinaryExpression;
 class CastExpression;
 class UnaryMinusExpression;
 class Int;
@@ -66,18 +51,31 @@ public:
 	yy::location location;
 
 	virtual ~Node() = 0;
+
+	virtual bool checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) = 0;
 };
 
 class Root: public Node {
 public:
-	std::unique_ptr<Node> FuncList;
+	std::unique_ptr<FunctionList> funcList;
 
-	Root (std::unique_ptr<Node> FunctionList) {
-		FuncList = std::move(FunctionList);
+	Root (std::unique_ptr<FunctionList> functionList) {
+		funcList = std::move(functionList);
+	}
+
+	void getReturnTypes (std::map<std::string, Type> & FunctionReturnType) {
+		return (*funcList).getReturnTypes(FunctionReturnType)
+	}
+
+	bool checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override {
+		return (*funcList).checkType(parentScope, functionReturnType);
 	}
 };
 
-class Function: public Node {};
+class Function: public Node {
+	virtual Type getType() = 0;
+	virtual std::string getName() = 0;
+};
 
 class FunctionList: public Node {
 public:
@@ -86,30 +84,82 @@ public:
 	FunctionList(std::unique_ptr<Function> func){
 		list.push_back(std::move(func));
 	}
+
+	void getReturnTypes(std::map<std::string, Type> & FunctionReturnType) {
+		for(int i = 0; i < list.size(); i++) {
+			FunctionReturnType[(*(list[i])).getName()] = (*(list[i])).getType();
+		}
+	}
+
+	bool checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override {
+		bool res = true;
+		for(int i = 0; i < list.size(); i++) {
+			std::map<std::string, Type> scope = parentScope;
+			res = *(list[i]).checkType(scope, functionReturnType);
+			if(!res) {
+				return false;
+			}
+		}
+
+		return true;
+	}
 };
 
 class FunctionDeclaration: public Function {
-	public:
-		Type type;
-		std::string name;
-		std::unique_ptr<ParameterList> paramList;
+public:
+	Type type;
+	std::string name;
+	std::unique_ptr<ParameterList> paramList;
 
-		FunctionDeclaration(Type t, std::string n, std::unique_ptr<ParameterList> param_list){
-			type = t;
-			name = n;
-			paramList = std::move(param_list);
-		}
+	FunctionDeclaration(Type t, std::string n, std::unique_ptr<ParameterList> param_list){
+		type = t;
+		name = n;
+		paramList = std::move(param_list);
+	}
+
+	Type getType() override {
+		return type;
+	}
+
+	std::string getName() override {
+		return name;
+	}
+
+	bool checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override {
+		return paramList -> checkType(parentScope, functionReturnType);
+	}	
 };
 
 class FunctionDefinition: public Function{
-	public:
-		std::unique_ptr<FunctionDeclaration> funcDecl;
-		std::unique_ptr<Block> blockNode;
+public:
+	std::unique_ptr<FunctionDeclaration> funcDecl;
+	std::unique_ptr<Block> blockNode;
 
-		FunctionDefinition(std::unique_ptr<FunctionDeclaration> function_decl, std::unique_ptr<Block> block){
-			funcDecl = std::move(function_decl);
-			blockNode = std::move(block);
+	FunctionDefinition(std::unique_ptr<FunctionDeclaration> function_decl, std::unique_ptr<Block> block){
+		funcDecl = std::move(function_decl);
+		blockNode = std::move(block);
+	}
+
+	Type getType() overrride {
+		return (*funcDecl).getType();
+	}
+
+	std::string getName override {
+		return (*funcDecl).getName();
+	}
+
+	bool checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override {
+		bool res = funcDecl -> checkType(parentScope, functionReturnType);
+
+		if(!res) {
+			return false;
 		}
+
+		res = blockNode -> checkType(parentScope, functionReturnType);
+		return res;
+	}
+	
+
 };
 
 class ParameterList: public Node {
@@ -117,6 +167,16 @@ class ParameterList: public Node {
 		std::unique_ptr<std::vector<std::unique_ptr<Declaration>>> paramList;
 
 		ParameterList(){}
+
+		bool checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override{
+			bool res = true;
+			for(int i = 0; i < (*paramList).size(); i++) {
+				res = (*paramList)[i]->checkType(parentScope, functionReturnType);
+				if(!res) {
+					return false;
+				}
+			}
+		}
 };
 
 class Block: public Node {};
@@ -126,6 +186,20 @@ class Suite: public Block{
 		std::vector<std::unique_ptr<Node>> suiteList;
 
 		Suite(){}
+
+		bool checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override {
+			int i = 0;
+			bool res = true;
+	
+			for(i = 0; i < suiteList.size(); i++) {
+				res = suiteList[i] -> checkType(parentScope, functionReturnType);
+				if(!res) {
+					return false;
+				}
+			}
+
+			return true;
+		}
 };
 
 class Declaration: public Node{
@@ -136,6 +210,13 @@ class Declaration: public Node{
 		Declaration(Type t, std::string n){
 			type = t;
 			name = n;
+		}
+
+		bool checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override {
+			if(parentScope.contains(n)) {
+				printf("[output] duplicate_decl %i %i \n", this->location.begin.line, this->location.begin.column);
+			}
+			parentScope[n] = t;
 		}
 };
 
@@ -149,6 +230,15 @@ public:
 		expr = std::move(expression);
 	}
 
+	bool checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override {
+		if(parentScope.contains(n)) {
+			printf("[output] duplicate_decl %i %i \n", this->location.begin.line, this->location.begin.column);
+			return false;
+		}
+		parentScope[n] = t;
+		bool res = expr -> checkType(parentScope, functionReturnType);
+		return res;	
+	}
 };
 
 class SimpleAssign: public Node {
@@ -159,6 +249,16 @@ public:
 	SimpleAssign(std::string name, std::unique_ptr<Expression> expression) {
 		n = name;
 		expr = std::move(expression);
+	}
+
+	bool checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override {
+	
+		if(!parentScope.contains(n)) {
+			printf("[output] type_decl: %i %i \n", this->location.begin.line, this->location.begin.column);
+			return false;
+		}
+
+		return expr -> checkType(parentScope, functionReturnType);
 	}
 };
 
@@ -173,13 +273,34 @@ public:
 		expr = std::move(expression);
 		op = operation;
 	}
+
+	bool checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override {
+	
+		if(!parentScope.contains(n)) {
+			printf("[output] type_decl: %i %i \n", this->location.begin.line, this->location.begin.column);
+			return false;
+		}
+
+		return expr -> checkType(parentScope, functionReturnType);
+	}
 };
 
-class Break: public Node {};
+class Break: public Node {
 
-class Continue: public Node {};
+	bool checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override { return true; }	
+};
 
-class ReturnVoid: public Node {};
+class Continue: public Node {
+
+	bool checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override { return true; }
+
+};
+
+class ReturnVoid: public Node {
+
+	bool checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override { return true; }
+
+};
 
 class ReturnNotVoid: public Node {
 public:
@@ -187,6 +308,10 @@ public:
 
 	ReturnNotVoid(std::unique_ptr<Expression> expression) {
 		expr = std::move(expression);
+	}
+
+	bool checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override { 
+		return expr -> checkType(parentScope, functionReturnType); 
 	}
 };
 
@@ -200,6 +325,13 @@ public:
 	If(std::unique_ptr<Expression> expression, std::unique_ptr<Block> block) {
 		expr = std::move(expression);
 		b = std::move(block);
+	}
+
+	bool checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override { 
+		scope = parentScope;
+		bool res = expr -> checkType(scope, );
+		res = res && b -> checkType(scope);
+		return res;
 	}
 };
 
@@ -216,6 +348,27 @@ public:
 		expr = std::move(expression);
 		b = std::move(block);
 	}
+
+	bool checkType(std::map<std::string, Type> & parentScope) override { 
+		bool res = true;
+		scope = parentScope;
+		
+		if(s1) {
+			res = res && s1->checkType(scope);
+		}
+		
+		if(expr) {
+			res = res && expr->checkType(scope);
+		}
+		
+		if(s2) {
+			res = res && s2->checkType(scope);
+		}
+		
+		res = res && b->checkType(scope);
+
+		return res;
+	}
 };
 
 class While: public CompoundStatement {
@@ -227,9 +380,19 @@ public:
 		expr = std::move(expression);
 		b = std::move(block);
 	}
+
+	bool checkType(std::map<std::string, Type> & parentScope) override {
+		bool res = true;
+		scope = parentScope;
+		res = res && expr -> checkType(scope);
+		res = res && b -> checkType(scope);
+		return res;
+	}
 };
 
-class Expression : public Node {};
+class Expression : public Node {
+	Type type;
+};
 
 class TernaryExpression : public Expression {
 public:
@@ -242,83 +405,35 @@ public:
 		tExpression1 = std::move(ternaryExpression1);
 		tExpression2 = std::move(ternaryExpression2);
 	}
+
+	bool checkType(std::map<std::string, Type> & parentScope) override {
+		bool res = true;
+		res = res && oExpression -> checkType(parentScope);
+		res = res && tExpression1 -> checkType(parentScope);
+		res = res && tExpression2 -> checkType(parentScope);
+		return res;
+	}
 };
 
-class OrExpression : public Expression {
+class BinaryExpression : public Expression {
 public:
-	std::unique_ptr<Expression> oExpression;
-	std::unique_ptr<Expression> aExpression;
-	
-	OrExpression (std::unique_ptr<Expression> orExpression, std::unique_ptr<Expression> andExpression) {
+	std::unique_ptr<Expression> Expression1;
+	std::unique_ptr<Expression> Expression2;
+	BinaryOp = op;
+
+	BinaryExpression (std::unique_ptr<Expression> orExpression, std::unique_ptr<Expression> andExpression, BinaryOp operation) {
 		oExpression = std::move(orExpression);
 		aExpression = std::move(andExpression);
-	}
-};
-
-class AndExpression : public Expression {
-public:
-	std::unique_ptr<Expression> aExpression;
-	std::unique_ptr<Expression> eqExpression;
-
-	AndExpression (std::unique_ptr<Expression> andExpression, std::unique_ptr<Expression> equalityExpression) {
-		aExpression = std::move(andExpression);
-		eqExpression = std::move(equalityExpression);
-	}	
-};
-
-class EqExpression : public Expression {
-public:
-	std::unique_ptr<Expression> eqExpression;
-	std::unique_ptr<Expression> cExpression;
-	EqOp op;
-	
-	EqExpression (std::unique_ptr<Expression> equalityExpression, std::unique_ptr<Expression> comparisonExpression, EqOp equalityOperator) {
-		eqExpression = std::move(equalityExpression);
-		cExpression = std::move(comparisonExpression);
-		op = equalityOperator;
-	}
-	
-};
-
-class CompExpression : public Expression {
-public:
-	std::unique_ptr<Expression> cExpression;
-	std::unique_ptr<Expression> pExpression;
-	CompOp op;
-	
-	CompExpression (std::unique_ptr<Expression> compExpression, std::unique_ptr<Expression> plusExpression, CompOp comparisonOperator) {
-		cExpression = std::move(compExpression);
-		pExpression = std::move(plusExpression);
-		op = comparisonOperator;
-	}
-	
-};
-
-class PlusExpression : public Expression {
-public:
-	std::unique_ptr<Expression> pExpression;
-	std::unique_ptr<Expression> mExpression;
-	PlusOp op;
-	
-	PlusExpression (std::unique_ptr<Expression> plusExpression, std::unique_ptr<Expression> mulExpression, PlusOp plusOperator) {
-		pExpression = std::move(plusExpression);
-		mExpression = std::move(mulExpression);
-		op = plusOperator;
-	}
-};
-
-class MulExpression : public Expression {
-public:
-	std::unique_ptr<Expression> mExpression;
-	std::unique_ptr<Expression> term;
-	MulOp op;
-
-	MulExpression(std::unique_ptr<Expression> multiplicationExpression, std::unique_ptr<Expression> argTerm, MulOp operation) {
-		mExpression = std::move(multiplicationExpression);
-		term = std::move(argTerm);
 		op = operation;
 	}
-};
+
+	bool checkType(std::map<std::string, Type> & parentScope) override {
+		bool res = true;
+		res = res && Expression1 -> checkType(parentScope);
+		res = res && Expression2 -> checkType(parentScope);
+		return res;
+	}
+}
 
 class CastExpression : public Expression {
 public:
@@ -328,6 +443,12 @@ public:
 	CastExpression(Type castType, std::unique_ptr<Expression> castExpression) {
 		cType = castType;
 		cExpression = std::move(castExpression);
+	}
+
+	bool checkType(std::map<std::string, Type> & parentScope) override {
+		bool res = true;
+		res = res && cExpression -> checkType(parentScope);
+		return res;
 	}	
 };
 
@@ -338,6 +459,11 @@ public:
 	UnaryMinusExpression(std::unique_ptr<Expression> expression) {
 		expr = std::move(expression);
 	}
+
+	bool checkType(std::map<std::string, Type> & parentScope) override {
+		bool res = true;
+		res = res && cExpression -> checkType(parentScope);
+	}
 };
 
 class Int : public Expression {
@@ -346,6 +472,10 @@ public:
 
 	Int(int arg) {
 		data = arg;
+	}
+
+	bool checkType(std::map<std::string, Type> & parentScope) override {
+		return true;
 	}
 };
 
@@ -365,14 +495,21 @@ public:
 	Bool(bool arg) {
 		data = arg;
 	}
+
+	bool checkType(std::map<std::string, Type> & parentScope) override {
+		return true;
+	}
 };
 
 class NameExpression : public Expression {
 public:
 	std::string name;
-
 	NameExpression (std::string arg) {
 		this -> name = arg;
+	}
+
+	bool checkType(std::map<std::string, Type> & parentScope) override {
+		return true;
 	}
 };
 
