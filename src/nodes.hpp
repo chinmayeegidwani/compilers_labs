@@ -259,7 +259,6 @@ class ReturnVoid: public SingleStatement {
 
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool isReturn() override;
-	void printTree() override;
 };
 
 class ReturnNotVoid: public SingleStatement {
@@ -273,7 +272,6 @@ public:
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 	bool isReturn() override;
-	void printTree() override;
 };
 
 class CompoundStatement: public Node {};
@@ -356,7 +354,6 @@ public:
 	Type type;
 	bool isConst() {return false;}
 	bool isBool(){return false;}
-	void printTree() override;
 };
 
 class TernaryExpression : public Expression {
