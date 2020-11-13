@@ -64,7 +64,6 @@ int parse(char const* path, std::unique_ptr<Node>& root) {
 
 bool verify_ast(Node* root) {
 	std::map<std::string, Type> FunctionReturnType;
-	(*root).getReturnTypes(FunctionReturnType);
 	std::map<std::string, Type> ScopedType;
 	(*root).checkType(ScopedType, FunctionReturnType);
 	// TODO: lab 3
