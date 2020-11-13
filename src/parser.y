@@ -92,7 +92,7 @@ template <typename T, typename... Args> static std::unique_ptr<T> make_node(yy::
 %type <std::unique_ptr<Declaration>> declaration
 %type <std::unique_ptr<Suite>> suite
 %type <std::unique_ptr<Node>> statement
-%type <std::unique_ptr<Node>> single_statement
+%type <std::unique_ptr<SingleStatement>> single_statement
 %type <AugmentedAssignOp> augmented_assign
 %type <std::unique_ptr<CompoundStatement>> compound_statement
 %type <std::unique_ptr<Expression>> expression
@@ -182,7 +182,7 @@ single_statement
 	| TOK_CONTINUE { $$ = make_node<Continue>(@$); }
 	| TOK_RETURN { $$ = make_node<ReturnVoid>(@$); }
 	| TOK_RETURN expression { $$ = make_node<ReturnNotVoid>(@$, $2); }
-	| expression { $$ = $1; }
+	| expression { $$ = make_node<ExpressionStatement>(@$, $1); }
 	;
 
 augmented_assign
@@ -215,17 +215,17 @@ ternary_expression
 	;
 
 or_expression
-	: or_expression TOK_LOG_OR and_expression { BinaryOp op = OR; $$ = make_node<OrExpression>(@$, $1, $3, op); }
+	: or_expression TOK_LOG_OR and_expression { BinaryOp op = OR; $$ = make_node<BinaryExpression>(@$, $1, $3, op); }
 	| and_expression { $$ = $1; }
 	;
 
 and_expression
-	: and_expression TOK_LOG_AND eq_expression { BinaryOp op = AND; $$ = make_node<AndExpression>(@$, $1, $3, op); }
+	: and_expression TOK_LOG_AND eq_expression { BinaryOp op = AND; $$ = make_node<BinaryExpression>(@$, $1, $3, op); }
 	| eq_expression { $$ = $1; }
 	;
 
 eq_expression
-	: eq_expression eq_op comp_expression { $$ = make_node<EqExpression>(@$, $1, $3, $2); }
+	: eq_expression eq_op comp_expression { $$ = make_node<BinaryExpression>(@$, $1, $3, $2); }
 	| comp_expression { $$ = $1; }
 	;
 
@@ -235,7 +235,7 @@ eq_op
 	;
 
 comp_expression
-	: comp_expression comp_op plus_expression { $$ = make_node<CompExpression>(@$, $1, $3, $2); }
+	: comp_expression comp_op plus_expression { $$ = make_node<BinaryExpression>(@$, $1, $3, $2); }
 	| plus_expression { $$ = $1; }
 	;
 
@@ -247,7 +247,7 @@ comp_op
 	;
 
 plus_expression
-	: plus_expression plus_minus_op mul_expression { $$ = make_node<PlusExpression>(@$, $1, $3, $2); }
+	: plus_expression plus_minus_op mul_expression { $$ = make_node<BinaryExpression>(@$, $1, $3, $2); }
 	| mul_expression { $$ = $1; }
 	;
 
@@ -257,7 +257,7 @@ plus_minus_op
 	;
 
 mul_expression
-	: mul_expression mul_div_op term { $$ = make_node<MulExpression>(@$, $1, $3, $2); }
+	: mul_expression mul_div_op term { $$ = make_node<BinaryExpression>(@$, $1, $3, $2); }
 	| term { $$ = $1; }
 	;
 

@@ -4,6 +4,8 @@
 #include "location.hh"
 #include <memory>
 #include <vector>
+#include <map>
+#include <set>
 
 enum Type {ERROR, NONE, VOID, INT, FLOAT, LOGICAL};
 typedef enum Type Type;
@@ -11,7 +13,7 @@ typedef enum Type Type;
 enum AugmentedAssignOp {PLUS_ASSIGN, MINUS_ASSIGN, STAR_ASSIGN, SLASH_ASSIGN};
 typedef enum AugmentedAssignOp AugmentedAssignOp;
 
-enum BinaryOp {PLUS, MINUS, MUL, DIV, AND, OR, EQ, NEQ, LT, GT, LE, GE}
+enum BinaryOp {PLUS, MINUS, MUL, DIV, AND, OR, EQ, NEQ, LT, GT, LE, GE};
 typedef enum BinaryOp BinaryOp;
 
 class Node;
@@ -45,18 +47,21 @@ class Float;
 class Bool;
 class NameExpression;
 class FunctionCall;
+class FunctionState;
 
 class Node {
 public:
 	yy::location location;
 
 	virtual ~Node() = 0;
-	/* checks for type_decl, type_mismatch, type_bool, type_return and duplicate_decl 
-	 * for variables (not functions), returns the type of the node it is called on
-	 */
-	virtual Type checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) = 0; 
+
+	virtual Type checkType(std::map<std::string, Type> & scope) = 0;
+
+	virtual bool checkReturn() { return false; }
+	virtual bool isReturn() { return false; }
+	virtual bool checkFuncDuplicates() { return false; };
 	virtual Node optimize() = 0;
-//	virtual Type checkReturnType(std::map<std::string, Type> & functionReturnType) { return NONE };
+
 };
 
 class Root: public Node {
@@ -67,10 +72,9 @@ public:
 		funcList = std::move(functionList);
 	}
 
-	Type checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override {
-		return (*funcList).checkType(parentScope, functionReturnType);
-	}
-
+	Type checkType(std::map<std::string, Type> & scope) override;
+	bool checkReturn() override;
+	bool checkFuncDuplicates() override;
 	std::unique_ptr<Root> optimize(){
 			// make new node
 			// make new root node - opt root
@@ -82,12 +86,8 @@ public:
 };
 
 class Function: public Node {
-	virtual Type getType() = 0;
-	virtual std::string getName() = 0;
-	// optimize, new node needed?
-	optimize(){
-		return;
-	}
+public:
+	virtual bool setDefDecl(std::set<std::string> & declared, std::set<std::string> & defined) = 0;
 };
 
 class FunctionList: public Node {
@@ -97,28 +97,18 @@ public:
 	FunctionList(std::unique_ptr<Function> func){
 		list.push_back(std::move(func));
 	}
-
-	Type checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override {
-		Type res = NONE;
-		for(int i = 0; i < list.size(); i++) {
-			std::map<std::string, Type> scope = parentScope;
-			res = list[i] -> checkType(scope, functionReturnType);
-			if(res == ERROR) {
-				return ERROR;
-			}
-		}
-
-		return res;
-	}
-
+	
+	Type checkType(std::map<std::string, Type> & scope) override;
+	bool checkReturn() override;
+	bool checkFuncDuplicates() override;
 	std::unique_ptr<FunctionList> optimize(){
-		std::vector<std::unique_ptr<Function>> optList;
+	std::vector<std::unique_ptr<Function>> optList;
 
-		for(int i = 0; i < list.size; i++){
-			optList[i] = list[i] -> optimize();
-		}
-		optFuncList = make_node<FunctionList> (this->location, optList);
-		return optFuncList;
+	for(int i = 0; i < list.size; i++){
+		optList[i] = list[i] -> optimize();
+	}
+	optFuncList = make_node<FunctionList> (this->location, optList);
+	return optFuncList;
 	}
 };
 
@@ -134,12 +124,9 @@ public:
 		paramList = std::move(param_list);
 	}
 
-	Type checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override {
-		functionReturnType[name] = type;
-		Type res = paramList -> checkType(parentScope, functionReturnType);
-		return type;
-	}
-
+	Type checkType(std::map<std::string, Type> & scope) override;
+	bool checkReturn() override;
+	bool setDefDecl(std::set<std::string> & declared, std::set<std::string> & defined) override;
 	std::unique_ptr<FunctionDeclaration> optimize(){
 		Type optType;
 		std::string optName;
@@ -165,22 +152,9 @@ public:
 		blockNode = std::move(block);
 	}
 
-	Type checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override {
-		type = funcDecl -> checkType(parentScope, functionReturnType);
-		Type return_type = blockNode -> checkReturnType(functionReturnType);
-
-		if(return_type == NONE && type == VOID) {
-			return type;
-		}
-
-		if(type != return_type) {
-			printf("[output] type_return: %i %i", this->location.begin.line, this->location.begin.column);
-			return ERROR;
-		}
-
-		return type;
-	}
-
+	Type checkType(std::map<std::string, Type> & scope) override;
+	bool checkReturn() override;
+	bool setDefDecl(std::set<std::string> & declared, std::set<std::string> & defined) override;
 	std::unique_ptr<FunctionDefinition> optimize(){
 		std::unique_ptr<FunctionDeclaration> optFuncDecl;
 		std::unique_ptr<Block> optBlockNode;
@@ -192,7 +166,6 @@ public:
 		funcDefn = make_node<FunctionDefinition>(this-> location, optFuncDecl, optBlockNode);
 		return funcDefn;
 	}
-	
 
 };
 
@@ -201,15 +174,7 @@ class ParameterList: public Node {
 		std::unique_ptr<std::vector<std::unique_ptr<Declaration>>> paramList;
 
 		ParameterList(){}
-
-		Type checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override{
-			Type res = NONE;
-			for(int i = 0; i < (*paramList).size(); i++) {
-				res = (*paramList)[i]->checkType(parentScope, functionReturnType);
-			}
-			return res;
-		}
-
+		Type checkType(std::map<std::string, Type> & scope) override;
 		std::unique_ptr<ParameterList> optimize(){
 			std::unique_ptr<std::vector<std::unique_ptr<Declaration>>> optParamList;
 			for(int i = 0; i < (*paramList).size; i++){
@@ -228,28 +193,8 @@ class Suite: public Block{
 
 		Suite(){}
 
-		Type checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override {
-			Type res = NONE;
-			Type statement_res = NONE;
-			for(int i = 0; i < suiteList.size(); i++) {
-				statement_res = suiteList[i] -> checkType(parentScope, functionReturnType);
-				if (statement_res == ERROR) {
-					return ERROR;
-				}
-
-				if(res != NONE && statement_res != NONE && statement_res != res) {
-					printf("[output] type_return: %i %i \n", this->location.begin.line, this->location.begin.column);
-					return ERROR;
-				}
-				
-				if(statement_res != NONE) {
-					res = statement_res;
-				}
-			}
-
-			return res;
-		}
-
+		Type checkType(std::map<std::string, Type> & scope) override;
+		bool checkReturn() override;
 		std::unique_ptr<Suite> optimize(){
 			std::vector<std::unique_ptr<Node>> optSuiteList;
 
@@ -265,8 +210,7 @@ class Suite: public Block{
 			return optSuite;
 		}
 
-		bool isBool(){return false;}
-
+		bool isBool(){return false;
 };
 
 class SingleStatement : public Node {};
@@ -279,13 +223,9 @@ public:
 		expr = std::move(expression);
 	}
 
-	Type checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override {
-		Type res = expr -> checkType(parentScope, functionReturnType);
-		if(res == ERROR) {
-			return ERROR;
-		}
-		return NONE;
-	}
+	Type checkType(std::map<std::string, Type> & scope) override;
+
+};
 
 	std::unique_ptr<ExpressionStatement> optimize(){
 		std::unique_ptr<Expression> optExpr;
@@ -307,15 +247,7 @@ class Declaration: public SingleStatement {
 			name = n;
 		}
 
-		Type checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override {
-			if(parentScope.contains(n)) {
-				printf("[output] duplicate_decl %i %i \n", this->location.begin.line, this->location.begin.column);
-				return ERROR;
-			}
-			parentScope[n] = t;
-			return NONE;
-		}
-
+		Type checkType(std::map<std::string, Type> & scope) override;
 		std::unique_ptr<Declaration> optimize(){
 			Type optType;
 			std::string optName;
@@ -337,19 +269,7 @@ public:
 		expr = std::move(expression);
 	}
 
-	Type checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override {
-		if(parentScope.contains(n)) {
-			printf("[output] duplicate_decl %i %i \n", this->location.begin.line, this->location.begin.column);
-			return ERROR;
-		}
-		parentScope[n] = decl -> checkType(parentScope, functionReturnType);
-		Type res = expr -> checkType(parentScope, functionReturnType);
-		if(parentScope[n] != res) {
-			printf("[output] type_mismatch %i %i \n", this->location.begin.line, this->location.begin.column);
-		}
-		return NONE;	
-	}
-
+	Type checkType(std::map<std::string, Type> & scope) override;
 	std::unique_ptr<DeclarationAssign> optimize(){
 		std::unique_ptr<Declaration> optDecl;
 		std::unique_ptr<Expression> optExpr;
@@ -362,7 +282,7 @@ public:
 	}
 };
 
-class SimpleAssign: public SingleStatment {
+class SimpleAssign: public SingleStatement {
 public:
 	std::string n;
 	std::unique_ptr<Expression> expr;
@@ -372,22 +292,7 @@ public:
 		expr = std::move(expression);
 	}
 
-	Type checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override {
-	
-		if(!parentScope.contains(n)) {
-			printf("[output] type_decl: %i %i \n", this->location.begin.line, this->location.begin.column);
-			return ERROR;
-		}
-		Type res = expr -> checkType(parentScope, functionReturnType);
-		if(res == ERROR) {
-			return ERROR;
-		}
-		if(res != parentScope[n]) {
-			printf("[output] type_mismatch: %i %i \n", this->location.begin.line, this->location.begin.column);
-		}
-		return NONE;
-	}
-
+	Type checkType(std::map<std::string, Type> & scope) override;
 	std::unique_ptr<SimpleAssign> optimize(){
 		std::string optN;
 		std::unique_ptr<Expression> optExpr;
@@ -411,26 +316,7 @@ public:
 		op = operation;
 	}
 
-	Type checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override {
-	
-		if(!parentScope.contains(n)) {
-			printf("[output] type_decl: %i %i \n", this->location.begin.line, this->location.begin.column);
-			return ERROR;
-		}
-
-		Type res = expr -> checkType(parentScope, functionReturnType);
-		if (res == ERROR) {
-			return ERROR;
-		}
-
-		if(res != parentScope[n]) {
-			printf("[output] type_mismatch: %i %i \n", this->location.begin.line, this->locatin.begin.column);
-			return ERROR;
-		}
-
-		return NONE;
-	}
-
+	Type checkType(std::map<std::string, Type> & scope) override;
 	std::unique_ptr<AugmentedAssign> optimize(){
 		std::string optN;
 		std::unique_ptr<Expression> optExpr;
@@ -447,18 +333,19 @@ public:
 
 class Break: public SingleStatement {
 
-	bool checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override { return NONE; }	
+	Type checkType(std::map<std::string, Type> & scope) override;	
 };
 
-class Continue: public SingleStatment {
+class Continue: public SingleStatement {
 
-	bool checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override { return NONE; }
+	Type checkType(std::map<std::string, Type> & scope) override;
 
 };
 
 class ReturnVoid: public SingleStatement {
 
-	bool checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override { return VOID; }
+	Type checkType(std::map<std::string, Type> & scope) override;
+	bool isReturn() override;
 
 };
 
@@ -470,9 +357,8 @@ public:
 		expr = std::move(expression);
 	}
 
-	Type checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override { 
-		return expr -> checkType(parentScope, functionReturnType); 
-	}
+	Type checkType(std::map<std::string, Type> & scope) override;
+	bool isReturn() override;
 };
 
 class CompoundStatement: public Node {};
@@ -487,21 +373,7 @@ public:
 		b = std::move(block);
 	}
 
-	Type checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override { 
-		scope = parentScope;
-		Type res = expr -> checkType(scope, functionReturnType);
-		if(res == ERROR) {
-			return ERROR;
-		}
-		if(res != LOGICAL) {
-			printf("[output] type_bool: %i %i \n", this->location.begin.line, this->location.begin.column);
-		}
-		res = b -> checkType(scope, functionReturnType);
-		return res;
-	}
-
-	
-	
+	Type checkType(std::map<std::string, Type> & scope) override;
 	std::unique_ptr<Block> optimize(){
 		if(expr->isBool()){
 			if(expr->whichBool){
@@ -541,50 +413,7 @@ public:
 		b = std::move(block);
 	}
 
-	Type checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override { 
-		Type res1 = NONE;
-		Type res2 = LOGICAL;
-		Type res3 = NONE
-		scope = parentScope;
-		
-		if(s1) {
-			res1 = s1->checkType(scope, functionReturnType);
-		}
-		
-		if(expr) {
-			res2 = expr->checkType(scope, functionReturnType);
-		}
-
-		if(res2 != LOGICAL) {
-			printf("[output] type_bool: %i %i \n", this->location.begin.line, this->location.begin.column);
-			return ERROR;
-		}
-
-		if(s2) {
-			res3 = s2->checkType(scope, functionReturnType);
-		}
-		
-		if(res1 != NONE && res3 != NONE && res1 != res3) {
-			printf("[output] type_return: %i %i \n", this->location.begin.line, this->location.begin.column);
-			return ERROR;
-		}
-
-		if(res3 != NONE) {
-			res1 = res3;
-		}
-		res3 = b -> checkType(scope, functionReturnType);
-
-		if(res1 != NONE && res3 != NONE && res1 != res3) {
-			printf("[output] type_return: %i %i \n", this->location.begin.line, this->location.begin.column);
-			return ERROR;
-		}
-
-		if(res1 != NONE) {
-			res3 = res1;
-		}
-
-		return res3;
-	}
+	Type checkType(std::map<std::string, Type> & scope) override;
 };
 
 class While: public CompoundStatement {
@@ -597,23 +426,11 @@ public:
 		b = std::move(block);
 	}
 
-	Type checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override {
-		scope = parentScope;
-		Type res = expr -> checkType(scope);
-		if(res == ERROR) {
-			return ERROR;
-		}
-		if(res != LOGICAL) {
-			printf("[output] type_bool: %i %i \n", this->location.begin.line, this->location.begin.column);
-			return ERROR;
-		}
-
-		res = b -> checkType(scope);
-		return res;
-	}
+	Type checkType(std::map<std::string, Type> & scope) override;
 };
 
 class Expression : public Node {
+public:
 	Type type;
 	bool isConst() {return false;}
 	bool isBool(){return false;}
@@ -631,117 +448,34 @@ public:
 		tExpression2 = std::move(ternaryExpression2);
 	}
 
-	Type checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override {
-		Type res = oExpression -> checkType(parentScope);
-		if(res != LOGICAL) {
-			printf("[output] type_bool: %i %i \n", this->location.begin.line, this->location.begin.column);
-			return ERROR;
-		}
-		Type res1 = tExpression1 -> checkType(parentScope);
-		Type res2 = tExpression2 -> checkType(parentScope);
-
-		if(res1 != res2) {
-			printf("[output] type_mismatch: %i %i \n", this->location.begin.line, this->location.begin.column);
-			return ERROR;
-		}
-
-		type = res1;
-		return type;
-	}
-
-
+	Type checkType(std::map<std::string, Type> & scope) override;
 };
 
 class BinaryExpression : public Expression {
 public:
-	std::unique_ptr<Expression> Expression1;
-	std::unique_ptr<Expression> Expression2;
-	BinaryOp = op;
+	std::unique_ptr<Expression> expression1;
+	std::unique_ptr<Expression> expression2;
+	BinaryOp op;
 
-	BinaryExpression (std::unique_ptr<Expression> orExpression, std::unique_ptr<Expression> andExpression, BinaryOp operation) {
-		oExpression = std::move(orExpression);
-		aExpression = std::move(andExpression);
+	BinaryExpression (std::unique_ptr<Expression> expr1, std::unique_ptr<Expression> expr2, BinaryOp operation) {
+		expression1 = std::move(expr1);
+		expression2 = std::move(expr2);
 		op = operation;
 	}
 
-	Type checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override {
-		Type res1 = Expression1 -> checkType(parentScope);
-		Type res2 = Expression2 -> checkType(parentScope);
-		if(res1 != res2) {
-			printf("[output] type_mismatch: %i %i", this->location.begin.line, this->location.begin.column);
-			return ERROR;
-		}
-		switch(op) {
-			case PLUS: type = res1;
-			case MINUS: type = res1;
-			case MUL: type = res1;
-			case DIV: type = res1;
-			case AND: type = LOGICAL;
-			case OR: type = LOGICAL;
-			case EQ: type = LOGICAL;
-			case NEQ: type = LOGICAL;
-			case LE: type = LOGICAL;
-			case LT: type = LOGICAL;
-			case GE: type = LOGICAL;
-			case GT: type = LOGICAL;
-		}
-		return type;
-	}
-
-	std::unique_ptr<Expression> optimize(){
-		// if oexpr->isconst and aexpr->isconst,
-		// do the actual expression and return
-		if(Expression1->isConst() && Expression2->isConst()){
-			std::unique_ptr<Node> data1;
-			std::unique_ptr<Node> data2;
-			std::unique_ptr<Node> ret;
-			data1 = Expression1->getData(); // return pointer to data
-			data2 = Expression2->getData();
-			switch(op){
-				case PLUS:
-					ret = (*data1) + (*data2);
-					return ret;
-				case MINUS:
-					ret = (*data1) - (*data2);
-					return ret;
-				case MUL:
-					ret = (*data1) * (*data2);
-					return ret;
-				case DIV:
-					ret = (*data1) / (*data2);
-					return ret;
-				case LE:
-					return false;
-
-
-			}
-		}
-	}
-
-	bool isConst(){return false;}
-
-	bool isBool(){return false;}
-}
+	Type checkType(std::map<std::string, Type> & scope) override;
+};
 
 class CastExpression : public Expression {
 public:
 	std::unique_ptr<Expression> cExpression;
 
 	CastExpression(Type castType, std::unique_ptr<Expression> castExpression) {
-		Type = castType;
+		type = castType;
 		cExpression = std::move(castExpression);
 	}
 
-	Type checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override {
-		res = cExpression -> checkType(parentScope);
-		if(res == ERROR) {
-			return ERROR;
-		}
-		return type;
-	}
-
-	bool isBool(){return false;}
-	bool isConst(){return false;}
+	Type checkType(std::map<std::string, Type> & scope) override;
 };
 
 class UnaryMinusExpression : public Expression {
@@ -752,13 +486,7 @@ public:
 		expr = std::move(expression);
 	}
 
-	Type checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override {
-		Type res = expr -> checkType(parentScope);
-		
-	}
-
-	bool isBool(){return false;}
-	bool isConst(){return false;}
+	Type checkType(std::map<std::string, Type> & scope) override;
 };
 
 class Int : public Expression {
@@ -769,12 +497,7 @@ public:
 		data = arg;
 	}
 
-	bool checkType(std::map<std::string, Type> & parentScope) override {
-		return true;
-	}
-
-	bool isBool(){return false;}
-	bool isConst(){return true;}
+	Type checkType(std::map<std::string, Type> & scope) override;
 };
 
 class Float : public Expression {
@@ -784,9 +507,8 @@ public:
 	Float(float arg) {
 		data = arg;
 	}
-
-	bool isBool(){return false;}
-	bool isConst(){return true;}
+	
+	Type checkType(std::map<std::string, Type> & scope) override;
 };
 
 class Bool : public Expression {
@@ -797,15 +519,7 @@ public:
 		data = arg;
 	}
 
-	bool checkType(std::map<std::string, Type> & parentScope) override {
-		return true;
-	}
-
-	bool isBool(){return true;}
-	bool whichBool(){
-		if (data){return true;} else{return false;}
-	}
-	bool isConst(){return true;}
+	Type checkType(std::map<std::string, Type> & scope) override;
 };
 
 class NameExpression : public Expression {
@@ -815,11 +529,7 @@ public:
 		this -> name = arg;
 	}
 
-	bool checkType(std::map<std::string, Type> & parentScope) override {
-		return true;
-	}
-
-	bool isConst(){return false;}
+	Type checkType(std::map<std::string, Type> & scope) override;
 };
 
 class FunctionCall : public Expression {
@@ -830,7 +540,8 @@ public:
 	FunctionCall(std::string arg) {
 		n = arg;
 	}
-	bool isConst(){return false;}
+
+	Type checkType(std::map<std::string, Type> & scope) override;
 };
 
 
