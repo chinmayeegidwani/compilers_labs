@@ -68,7 +68,7 @@ bool verify_ast(Node* root) {
 		printf("Called checkFuncDuplicates \n");
 		return false;
 	}
-	std::map<std::string, Type> scope;
+	std::map<std::string, Type> scopet
 	Type result = (*root).checkType(scope);
 	if(result == ERROR) {
 		printf("Called checkType \n");
