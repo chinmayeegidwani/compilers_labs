@@ -696,7 +696,7 @@ void While::printTree(){
 	return;
 }
 
-void TernaryExpr::printTree(){
+void TernaryExpression::printTree(){
 	printf("		ternary expr(%i, %i){\n",this->location.begin.line, this->location.begin.column);
 	oExpression->printTree();
 	tExpression1->printTree();
@@ -767,7 +767,7 @@ void FunctionCall::printTree(){
 	args->printTree();
 	const char* types[6] = {"error", "none", "void", "int", "float", "logical"};
 
-	for(int i=0; i<arg_types.size(); i++){
+	for(unsigned long int i=0; i<arg_types.size(); i++){
 		printf("type %i: %s\n", i, types[arg_types[i]]);
 	}
 	printf("			}\n");

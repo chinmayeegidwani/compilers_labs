@@ -56,7 +56,7 @@ public:
 	virtual ~Node() = 0;
 
 	virtual Type checkType(std::map<std::string, Type> & scope) = 0;
-	virtual printTree();
+	virtual void printTree();
 	virtual bool checkReturn() { return false; }
 	virtual bool isReturn() { return false; }
 	virtual bool checkFuncDuplicates() { return false; }
