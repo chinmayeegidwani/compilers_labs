@@ -59,7 +59,7 @@ public:
 
 	virtual bool checkReturn() { return false; }
 	virtual bool isReturn() { return false; }
-	virtual bool checkFuncDuplicates() { return false; }
+	virtual bool checkFuncDuplicates() { printf("Called Node implementation of checkFuncDuplicates"); return false; }
 	virtual bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) {return true; }
 
 };
