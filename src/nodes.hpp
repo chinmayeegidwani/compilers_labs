@@ -56,10 +56,10 @@ public:
 	virtual ~Node() = 0;
 
 	virtual Type checkType(std::map<std::string, Type> & scope) = 0;
-
+	virtual printTree();
 	virtual bool checkReturn() { return false; }
 	virtual bool isReturn() { return false; }
-	virtual bool checkFuncDuplicates() { printf("Called Node implementation of checkFuncDuplicates"); return false; }
+	virtual bool checkFuncDuplicates() { return false; }
 	virtual bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) {return true; }
 
 };
@@ -69,7 +69,6 @@ public:
 	std::unique_ptr<FunctionList> funcList;
 
 	Root (std::unique_ptr<FunctionList> functionList) {
-		printf("Calling the root constructor \n");
 		funcList = std::move(functionList);
 	}
 
@@ -77,7 +76,7 @@ public:
 	bool checkReturn() override;
 	bool checkFuncDuplicates() override;
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
-	void printTree();
+	void printTree() override;
 //	std::unique_ptr<Root> optimize() override;
 };
 
@@ -99,7 +98,7 @@ public:
 	bool checkFuncDuplicates() override;
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 
-	void printTree();
+	void printTree() override;
 //	std::unique_ptr<FunctionList> optimize();
 };
 
@@ -121,7 +120,7 @@ public:
 	bool setDefDecl(std::set<std::string> & declared, std::set<std::string> & defined) override;
 //	std::unique_ptr<FunctionDeclaration> optimize();
 
-	void printTree();
+	void printTree() override;
 };
 
 class FunctionDefinition: public Function{
@@ -139,7 +138,7 @@ public:
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkReturn() override;
 	bool setDefDecl(std::set<std::string> & declared, std::set<std::string> & defined) override;
-	void printTree();
+	void printTree() override;
 };
 
 class ParameterList: public Node {
@@ -148,7 +147,7 @@ class ParameterList: public Node {
 
 		ParameterList(){}
 		Type checkType(std::map<std::string, Type> & scope) override;
-		void printTree();
+		void printTree() override;
 };
 
 class Block: public Node {};
@@ -163,7 +162,7 @@ class Suite: public Block{
 		bool checkReturn() override;
 
 		bool isBool(){ return false; };
-		void printTree();
+		void printTree() override;
 };
 
 class SingleStatement : public Node {};
@@ -178,7 +177,7 @@ public:
 
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
-	void printTree();
+	void printTree() override;
 
 };
 
@@ -193,7 +192,7 @@ public:
 	}
 
 	Type checkType(std::map<std::string, Type> & scope) override;
-	void printTree();
+	void printTree() override;
 };
 
 class DeclarationAssign: public SingleStatement {
@@ -208,7 +207,7 @@ public:
 
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
-	void printTree();
+	void printTree() override;
 };
 
 class SimpleAssign: public SingleStatement {
@@ -223,7 +222,7 @@ public:
 
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
-	void printTree();
+	void printTree() override;
 };
 
 class AugmentedAssign: public SingleStatement {
@@ -240,19 +239,19 @@ public:
 
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
-	void printTree();
+	void printTree() override;
 };
 
 class Break: public SingleStatement {
 
 	Type checkType(std::map<std::string, Type> & scope) override;	
-	void printTree();
+	void printTree() override;
 };
 
 class Continue: public SingleStatement {
 
 	Type checkType(std::map<std::string, Type> & scope) override;
-	void printTree();
+	void printTree() override;
 
 };
 
@@ -260,7 +259,7 @@ class ReturnVoid: public SingleStatement {
 
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool isReturn() override;
-	void printTree();
+	void printTree() override;
 };
 
 class ReturnNotVoid: public SingleStatement {
@@ -274,7 +273,7 @@ public:
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 	bool isReturn() override;
-	void printTree();
+	void printTree() override;
 };
 
 class CompoundStatement: public Node {};
@@ -291,7 +290,7 @@ public:
 
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
-	void printTree();
+	void printTree() override;
 /*
 	std::unique_ptr<Block> optimize(){
 		if(expr->isBool()){
@@ -334,7 +333,7 @@ public:
 
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
-	void printTree();
+	void printTree() override;
 };
 
 class While: public CompoundStatement {
@@ -349,7 +348,7 @@ public:
 
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
-	void printTree();
+	void printTree() override;
 };
 
 class Expression : public Node {
@@ -357,7 +356,7 @@ public:
 	Type type;
 	bool isConst() {return false;}
 	bool isBool(){return false;}
-	void printTree();
+	void printTree() override;
 };
 
 class TernaryExpression : public Expression {
@@ -374,7 +373,7 @@ public:
 
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
-	void printTree();
+	void printTree() override;
 };
 
 class BinaryExpression : public Expression {
@@ -391,7 +390,7 @@ public:
 
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
-	void printTree();
+	void printTree() override;
 };
 
 class CastExpression : public Expression {
@@ -405,7 +404,7 @@ public:
 
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
-	void printTree();
+	void printTree() override;
 };
 
 class UnaryMinusExpression : public Expression {
@@ -418,7 +417,7 @@ public:
 
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
-	void printTree();
+	void printTree() override;
 };
 
 class Int : public Expression {
@@ -430,7 +429,7 @@ public:
 	}
 
 	Type checkType(std::map<std::string, Type> & scope) override;
-	void printTree();
+	void printTree() override;
 };
 
 class Float : public Expression {
@@ -442,7 +441,7 @@ public:
 	}
 	
 	Type checkType(std::map<std::string, Type> & scope) override;
-	void printTree();
+	void printTree() override;
 };
 
 class Bool : public Expression {
@@ -454,7 +453,7 @@ public:
 	}
 
 	Type checkType(std::map<std::string, Type> & scope) override;
-	void printTree();
+	void printTree() override;
 };
 
 class NameExpression : public Expression {
@@ -465,7 +464,7 @@ public:
 	}
 
 	Type checkType(std::map<std::string, Type> & scope) override;
-	void printTree();
+	void printTree() override;
 };
 
 class FunctionCall : public Expression {
@@ -480,7 +479,7 @@ public:
 
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
-	void printTree();
+	void printTree() override;
 };
 
 #endif // ECE467_NODE_HPP_INCLUDED
