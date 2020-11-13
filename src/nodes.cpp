@@ -776,6 +776,18 @@ void FunctionCall::printTree(){
 	return;
 }
 
+void ReturnVoid::printTree(){
+	printf("	return void(%i, %i){\n",this->location.begin.line, this->location.begin.column);
+	printf("	}\n");
+	return;
+}
+
+void ReturnNotVoid::printTree(){
+	printf("	return expr(%i, %i){\n",this->location.begin.line, this->location.begin.column);
+	expr->printTree();
+	printf("	}\n");
+	return;
+}
 
 
 /*
