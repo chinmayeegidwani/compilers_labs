@@ -63,9 +63,8 @@ int parse(char const* path, std::unique_ptr<Node>& root) {
 }
 
 bool verify_ast(Node* root) {
-	std::map<std::string, Type> FunctionReturnType;
-	std::map<std::string, Type> ScopedType;
-	(*root).checkType(ScopedType, FunctionReturnType);
+	std::map<std::string, Type> scope;
+	(*root).checkType(scope);
 	// TODO: lab 3
 	return true;
 }
@@ -81,13 +80,6 @@ void print_ast(Node* root) {
 	return;
 }
 
-int func() {
-	int i;
-	if (true) {
-		int j;
-	}
-	j = 0;
-}
 std::unique_ptr<CompilationUnit> compile(Node* root) {
 	std::unique_ptr<CompilationUnit> unit = std::make_unique<CompilationUnit>();
 	if (!unit->process(root)) {
