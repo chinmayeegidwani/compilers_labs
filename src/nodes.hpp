@@ -69,6 +69,7 @@ public:
 	std::unique_ptr<FunctionList> funcList;
 
 	Root (std::unique_ptr<FunctionList> functionList) {
+		printf("Making the root node \n");
 		funcList = std::move(functionList);
 	}
 
@@ -90,6 +91,7 @@ public:
 	std::vector<std::unique_ptr<Function>> list;
 
 	FunctionList(std::unique_ptr<Function> func){
+		printf("Making the function list");
 		list.push_back(std::move(func));
 	}
 	
@@ -109,6 +111,7 @@ public:
 	std::unique_ptr<ParameterList> paramList;
 
 	FunctionDeclaration(Type t, std::string n, std::unique_ptr<ParameterList> param_list){
+		printf("Making the Function Declaration \n");
 		type = t;
 		name = n;
 		paramList = std::move(param_list);
@@ -130,6 +133,7 @@ public:
 	Type type;
 
 	FunctionDefinition(std::unique_ptr<FunctionDeclaration> function_decl, std::unique_ptr<Block> block){
+		printf("Making the function definition");
 		funcDecl = std::move(function_decl);
 		blockNode = std::move(block);
 	}
@@ -146,6 +150,7 @@ public:
 		std::unique_ptr<std::vector<std::unique_ptr<Declaration>>> paramList;
 
 		ParameterList() {
+			printf("Making the parameter list");
 			paramList = std::make_unique<std::vector<std::unique_ptr<Declaration>>>();
 		}
 		Type checkType(std::map<std::string, Type> & scope) override;
@@ -158,7 +163,9 @@ class Suite: public Block{
 	public:
 		std::vector<std::unique_ptr<Node>> suiteList;
 
-		Suite(){}
+		Suite(){
+			printf("Making the suite \n");
+		}
 		bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 		Type checkType(std::map<std::string, Type> & scope) override;
 		bool checkReturn() override;
@@ -174,6 +181,7 @@ public:
 	std::unique_ptr<Expression> expr;
 	
 	ExpressionStatement(std::unique_ptr<Expression> expression) {
+		printf("Inside ExpressionStatement constructor \n");
 		expr = std::move(expression);
 	}
 
@@ -189,6 +197,7 @@ public:
 	std::string name;
 
 	Declaration(Type t, std::string n){
+		printf("Declaration constructor \n");
 		type = t;
 		name = n;
 	}
@@ -475,6 +484,7 @@ public:
 	std::vector<Type> arg_types;
 
 	FunctionCall(std::string arg) {
+		printf("Function Call constructor \n");
 		args = std::make_unique<std::vector<std::unique_ptr<Expression>>>();
 		n = arg;
 	}
