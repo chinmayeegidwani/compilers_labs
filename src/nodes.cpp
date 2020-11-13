@@ -3,7 +3,17 @@
 Node::~Node() = default;
 
 Type Root::checkType(std::map<std::string, Type> & scope) {
-	return (*funcList).checkType(scope);
+	Type result = (*funcList).checkType(scope);
+	if(scope.find("main") == scope.end()) {
+		printf("[output] main_function %i %i", this->location.begin.line, this->location.begin.column);
+		return ERROR;
+	}
+	if((scope.find("main") -> second) != INT) {
+		printf("[output] main_function %i %i", this->location.begin.line, this->location.begin.column);
+		return ERROR;
+	}
+
+	return result;
 }
 
 Type FunctionList::checkType(std::map<std::string, Type> & scope) {
@@ -339,6 +349,51 @@ Type FunctionCall::checkType(std::map<std::string, Type> & scope) {
 	type = scope[n];
 	return type;
 }
+
+bool ReturnVoid::isReturn() {return true; }
+bool ReturnNotVoid::isReturn() {return true; }
+
+bool Root::checkReturn() {
+	return funcList -> checkReturn();
+}
+
+bool FunctionList::checkReturn() {
+	bool result = true;
+	for(unsigned long int i = 0; i < list.size(); i++) {
+		result = result && list[i] -> checkReturn();
+	}
+	return result;
+}
+
+bool FunctionDeclaration::checkReturn() {
+	return true;
+}
+
+bool FunctionDefinition::checkReturn() {
+	bool result = blockNode -> checkReturn();
+	if(!result && type == VOID) {
+		return true;
+	}
+	if(!result) {
+		printf("[output] return_statement: %i %i \n", this->location.begin.line, this->location.begin.column);
+	}
+	return result;
+}
+
+bool Suite::checkReturn() {
+	bool result = false;
+	for(unsigned long int i = 0; i  < suiteList.size(); i++) {
+		result = result || suiteList[i] -> isReturn();
+	}
+	return result;
+}
+
+
+
+
+
+
+
 
 
 

@@ -64,8 +64,13 @@ int parse(char const* path, std::unique_ptr<Node>& root) {
 
 bool verify_ast(Node* root) {
 	std::map<std::string, Type> scope;
-	(*root).checkType(scope);
-	// TODO: lab 3
+	Type result = (*root).checkType(scope);
+	if(result == ERROR) {
+		return false;
+	}
+	if(!(*root).checkReturn()) {
+		return false;
+	}
 	return true;
 }
 

@@ -55,6 +55,9 @@ public:
 
 	virtual Type checkType(std::map<std::string, Type> & scope) = 0;
 
+	virtual bool checkReturn() { return false; }
+	virtual bool isReturn() { return false; }
+
 };
 
 class Root: public Node {
@@ -66,6 +69,7 @@ public:
 	}
 
 	Type checkType(std::map<std::string, Type> & scope) override;
+	bool checkReturn() override;
 };
 
 class Function: public Node {};
@@ -79,6 +83,7 @@ public:
 	}
 	
 	Type checkType(std::map<std::string, Type> & scope) override;
+	bool checkReturn() override;
 };
 
 class FunctionDeclaration: public Function {
@@ -94,6 +99,7 @@ public:
 	}
 
 	Type checkType(std::map<std::string, Type> & scope) override;
+	bool checkReturn() override;
 };
 
 class FunctionDefinition: public Function{
@@ -108,6 +114,7 @@ public:
 	}
 
 	Type checkType(std::map<std::string, Type> & scope) override;
+	bool checkReturn() override;
 	
 
 };
@@ -117,7 +124,6 @@ class ParameterList: public Node {
 		std::unique_ptr<std::vector<std::unique_ptr<Declaration>>> paramList;
 
 		ParameterList(){}
-
 		Type checkType(std::map<std::string, Type> & scope) override;
 };
 
@@ -130,6 +136,7 @@ class Suite: public Block{
 		Suite(){}
 
 		Type checkType(std::map<std::string, Type> & scope) override;
+		bool checkReturn() override;
 };
 
 class SingleStatement : public Node {};
@@ -214,6 +221,7 @@ class Continue: public SingleStatement {
 class ReturnVoid: public SingleStatement {
 
 	Type checkType(std::map<std::string, Type> & scope) override;
+	bool isReturn() override;
 
 };
 
@@ -226,6 +234,7 @@ public:
 	}
 
 	Type checkType(std::map<std::string, Type> & scope) override;
+	bool isReturn() override;
 };
 
 class CompoundStatement: public Node {};
