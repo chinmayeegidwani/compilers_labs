@@ -119,7 +119,7 @@ root
 
 function_list
 	: function { $$ = make_node<FunctionList>(@$, $1);}
-	| function_list function {$$= $1; $$->list.push_back($2);}
+	| function_list function {$$= $1; $$->list.push_back(std::move($2));}
 	;
 
 function
@@ -148,12 +148,12 @@ name
 
 parameter_list
 	: %empty {$$ = make_node<ParameterList>(@$); }
-	| declaration declaration_extra {$$ = make_node<ParameterList>(@$); $$ -> paramList = $2; (*($$ -> paramList)).push_back($1); }
+	| declaration declaration_extra {$$ = make_node<ParameterList>(@$); $$ -> paramList = $2; (*($$ -> paramList)).push_back(std::move($1)); }
 	;
 
 declaration_extra
 	: %empty {$$ = std::make_unique<std::vector<std::unique_ptr<Declaration>>>(); }
-	| TOK_COMMA declaration declaration_extra {$$ = $3; (*$$).push_back($2); }
+	| TOK_COMMA declaration declaration_extra {$$ = $3; (*$$).push_back(std::move($2)); }
 	;
 
 block
@@ -162,7 +162,7 @@ block
 
 suite
 	: %empty {$$ = make_node<Suite>(@$); }
-	| statement suite {$$ = $2; $$ -> suiteList.push_back($1); }
+	| statement suite {$$ = $2; $$ -> suiteList.push_back(std::move($1)); }
 	;
 
 declaration
@@ -284,12 +284,12 @@ factor
 
 function_call
 	: name TOK_LPAREN TOK_RPAREN { $$ = make_node<FunctionCall>(@$, $1); }
-	| name TOK_LPAREN expression comma_expression TOK_RPAREN { $$ = make_node<FunctionCall>(@$, $1); $$ -> args = $4; (*($$ -> args)).push_back($3); }
+	| name TOK_LPAREN expression comma_expression TOK_RPAREN { $$ = make_node<FunctionCall>(@$, $1); $$ -> args = $4; (*($$ -> args)).push_back(std::move($3)); }
 	;
 
 comma_expression
 	: %empty {std::make_unique<std::vector<std::unique_ptr<Expression>>>(); }
-	| TOK_COMMA expression comma_expression { $$ = $3; (*$$).push_back($2); }
+	| TOK_COMMA expression comma_expression { $$ = $3; $$->push_back(std::move($2)); }
 	;
 
 %%

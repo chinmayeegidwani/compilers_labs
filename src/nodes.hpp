@@ -142,10 +142,12 @@ public:
 };
 
 class ParameterList: public Node {
-	public:
+public:
 		std::unique_ptr<std::vector<std::unique_ptr<Declaration>>> paramList;
 
-		ParameterList(){}
+		ParameterList() {
+			paramList = std::make_unique<std::vector<std::unique_ptr<Declaration>>>();
+		}
 		Type checkType(std::map<std::string, Type> & scope) override;
 		void printTree() override;
 };
@@ -473,6 +475,7 @@ public:
 	std::vector<Type> arg_types;
 
 	FunctionCall(std::string arg) {
+		args = std::make_unique<std::vector<std::unique_ptr<Expression>>>();
 		n = arg;
 	}
 

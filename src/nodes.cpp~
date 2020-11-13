@@ -64,7 +64,10 @@ Type FunctionDefinition::checkType(std::map<std::string, Type> & scope) {
 
 Type ParameterList::checkType(std::map<std::string, Type> & scope) {
 	Type res = NONE;
-	for(unsigned long int i = 0; i < (*paramList).size(); i++) {
+	if(paramList == nullptr) {
+		return NONE;
+	}
+	for(unsigned long int i = 0; i < paramList -> size(); i++) {
 		res = (*paramList)[i]->checkType(scope);
 		if(res == ERROR) {
 			return ERROR;
@@ -398,23 +401,20 @@ bool Suite::checkReturn() {
 }
 
 bool Root::checkFuncDuplicates() {
-	printf("Reached the call to Root \n");
 	return funcList->checkFuncDuplicates();
 }
 
 bool FunctionList::checkFuncDuplicates() {
-	printf("Reached the call to Function List \n");
 	std::set<std::string> declared;
 	std::set<std::string> defined;
 	bool res = true;
 	for(unsigned long int i = 0; i < list.size(); i++) {
-		res = res && list[i]->setDefDecl(declared, defined);
+		res = res && (list[i]->setDefDecl(declared, defined));
 	}
 	return res;
 }
 
 bool FunctionDeclaration::setDefDecl(std::set<std::string> & declared, std::set<std::string> & defined) {
-	printf("Reached the call to Function Declaration \n");
 	if(declared.find(name) != declared.end()) {
 		printf("[output] duplicate_decl: %i %i \n", this->location.begin.line, this->location.begin.column);
 		return false;
@@ -425,6 +425,7 @@ bool FunctionDeclaration::setDefDecl(std::set<std::string> & declared, std::set<
 }
 
 bool FunctionDefinition::setDefDecl(std::set<std::string> & declared, std::set<std::string> & defined) {
+	printf("Reached the call to Function Definition \n");
 	if(defined.find(funcDecl -> name) != defined.end()) {
 		printf("[output] duplicated_decl: %i %i \n", this->location.begin.line, this->location.begin.column);
 		return false;

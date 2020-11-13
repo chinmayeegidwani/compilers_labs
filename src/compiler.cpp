@@ -63,24 +63,23 @@ int parse(char const* path, std::unique_ptr<Node>& root) {
 }
 
 bool verify_ast(Node* root) {
-	printf("Called verify ast \n");
+	printf("Call verify ast \n");
 	if(!(root->checkFuncDuplicates())){
-		printf("Called checkFuncDuplicates \n");
 		return false;
 	}
+	printf("Calling checkType \n");
 	std::map<std::string, Type> scope;
 	Type result = (*root).checkType(scope);
 	if(result == ERROR) {
-		printf("Called checkType \n");
 		return false;
 	}
+	printf("Calling checkReturn \n");
 	if(!(*root).checkReturn()) {
-		printf("Called checkReturn \n");
 		return false;
 	}
+	printf("Calling checkTypeArg \n");
 	std::map<std::string, std::vector<Type>> func_args;
 	if(!(*root).checkTypeArg(func_args)) {
-		printf("Called checkTypeArg \n");
 		return false;
 	}
 	return true;
