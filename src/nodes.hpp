@@ -69,6 +69,7 @@ public:
 	std::unique_ptr<FunctionList> funcList;
 
 	Root (std::unique_ptr<FunctionList> functionList) {
+		printf("Calling the root constructor \n");
 		funcList = std::move(functionList);
 	}
 

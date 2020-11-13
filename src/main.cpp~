@@ -1,7 +1,7 @@
 /*
  * UofT ECE 467
- * - student number, first name, last name
- * - student number, first name, last name
+ * - 1002934284, Kamran, Ramji
+ * - 1003062473, Chinmayee, Gidwani
  */
 
 #include "compiler.hpp"
@@ -38,6 +38,7 @@ int main(int argc, char** argv) {
 		if (ret != 0) {
 			return 1;
 		}
+		root -> checkFuncDuplicates();
 		if (!verify_ast(root.get())) {
 			printf("[output] semantic analysis failed.\n");
 			return 1;
