@@ -768,7 +768,7 @@ void FunctionCall::printTree(){
 	const char* types[6] = {"error", "none", "void", "int", "float", "logical"};
 
 	for(unsigned long int i=0; i<arg_types.size(); i++){
-		printf("type %u: %s\n", i, types[arg_types[i]]);
+		printf("type %lu: %s\n", i, types[arg_types[i]]);
 		(*args)[i]->printTree();
 	}
 
