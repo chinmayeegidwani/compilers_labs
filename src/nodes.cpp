@@ -570,6 +570,212 @@ bool FunctionCall::checkTypeArg(std::map<std::string, std::vector<Type>> & funcS
 	return true;
 }
 
+void Root::printTree(){
+	printf("root (%i, %i){\n", this->location.begin.line, this->location.begin.column);
+	funcList->printTree(); 
+	printf("}\n");
+	return;
+}
+
+void FunctionList::printTree(){
+	for(int i=0; i < list.size(); i++){
+		list[i]->printTree();
+	}
+	return;
+}
+
+void FunctionDeclaration::printTree(){
+	printf("	func decl (%i, %i) {\n", this->location.begin.line, this->location.begin.column);
+	const char* types = ["error", "none", "void", "int", "float", "logical"];
+	printf("		return type: %s\n", types[t]);
+	printf("		name: %s\n", name.c_str());
+	paramList->printTree();
+	printf("	} \n");
+	return;
+}
+
+void FunctionDefinition::printTree(){
+	printf("	func decl (%i, %i) {\n", this->location.begin.line, this->location.begin.column);
+	const char* types = ["error", "none", "void", "int", "float", "logical"];
+	funcDecl->printTree();
+	blockNode->printTree();
+	printf("		return type: %s\n", types[t]);
+	printf("	} \n");
+	return;
+}
+
+void ParameterList::printTree(){
+	printf("		params(%i, %i)\n", this->location.begin.line, this->location.begin.column);
+	for(int i = 0; i < (*paramList).size(); i++){
+		paramList[i]->printTree();
+	}
+	printf("		} \n");
+	return;
+}
+
+void Suite::printTree(){
+	printf("	suite (%i, %i)\n", this->location.begin.line, this->location.begin.column);
+	for(int i=0; i<suiteList.size(); i++){
+		suiteList[i]->printTree();
+	}
+	printf("	} \n");
+	return;
+}
+
+void ExpressionStatement::printTree(){
+	printf("		expr stmt (%i, %i)\n", this->location.begin.line, this->location.begin.column);
+	expr->printTree();
+	printf("		} \n");
+	return;
+}
+
+void Declaration::printTree(){
+	printf("		decl (%i, %i)", this->location.begin.line, this->location.begin.column);
+	const char* types = ["error", "none", "void", "int", "float", "logical"];
+	printf("%s %s", types[type], name.c_str());
+	printf("		} \n");
+	return;
+}
+
+void DeclarationAssign::printTree(){
+	printf("		decl assign (%i, %i)", this->location.begin.line, this->location.begin.column);
+	decl->printTree();
+	expr->printTree();
+	printf("		} \n");
+	return;
+}
+
+void SimpleAssign::printTree(){
+	printf("		simp assign(%i, %i)", this->location.begin.line, this->location.begin.column);
+	printf(n.c_str());
+	expr->printTree();
+	printf("		} \n");
+	return;
+}
+
+void AugmentedAssign::printTree(){
+	printf("		aug assign(%i, %i)", this->location.begin.line, this->location.begin.column);
+	printf("var name: %s\n", n.c_str());
+	const char* augops = ["plus_assign", "minus_assign", "star_assign", "slash_assign"];
+	printf("op: %s\n", augops[op]);
+	expr->printTree();
+	printf("		} \n");
+	return;
+}
+
+void Break::printTree(){
+	printf("			break(%i, %i)\n", this->location.begin.line, this->location.begin.column);
+	return;
+}
+
+void Continue::printTree(){
+	printf("			continue(%i, %i)\n",this->location.begin.line, this->location.begin.column);
+	return;
+}
+
+void If::printTree(){
+	printf("		if(%i, %i){\n",this->location.begin.line, this->location.begin.column);
+	expr->printTree();
+	printf("		}\n");
+	return;
+}
+
+void For::printTree(){
+	printf("		for(%i, %i){\n",this->location.begin.line, this->location.begin.column);
+	s1->printTree();
+	expr->printTree();
+	s2->printTree();
+	printf("		}\n");
+	return;
+}
+
+void While::printTree(){
+	printf("		while(%i, %i){\n",this->location.begin.line, this->location.begin.column);
+	expr->printTree();
+	printf("		}\n");
+	return;
+}
+
+void TernaryExpr::printTree(){
+	printf("		ternary expr(%i, %i){\n",this->location.begin.line, this->location.begin.column);
+	oExpression->printTree();
+	tExpression1->printTree();
+	tExpression2->printTree();
+	printf("		}\n");
+	return;
+}
+
+void BinaryExpression::printTree(){
+	printf("		binary expr(%i, %i){\n",this->location.begin.line, this->location.begin.column);
+	expression1->printTree();
+	expression2->printTree();
+	const char* binops= ["plus", "minus", "mul", "div", "and", "or", "eq", "neq", "lt", "gt", "le", "ge"];
+	printf("op: %s\n", binops[op]);
+	printf("		}\n");
+	return;
+}
+
+void CastExpression::printTree(){
+	printf("		cast expr(%i, %i){\n",this->location.begin.line, this->location.begin.column);
+	cExpression->printTree();
+	printf("		}\n");
+	return;
+}
+
+void UnaryMinusExpression::printTree(){
+	printf("		unary minus expr(%i, %i){\n",this->location.begin.line, this->location.begin.column);
+	expr->printTree();
+	printf("		}\n");
+	return;
+}
+
+void Int::printTree(){
+	printf("			int(%i, %i){\n",this->location.begin.line, this->location.begin.column);
+	printf("%i\n", data);
+	printf("			}\n");
+	return;
+}
+
+void Float::printTree(){
+	printf("			float(%i, %i){\n",this->location.begin.line, this->location.begin.column);
+	printf("%f\n", data);
+	printf("			}\n");
+	return;
+}
+
+void Bool::printTree(){
+	printf("			float(%i, %i){\n",this->location.begin.line, this->location.begin.column);
+	if(data){
+		printf("true");
+	} else{
+		printf("false");
+	}
+	printf("			}\n");
+	return;
+}
+
+void NameExpression::printTree(){
+	printf("			name expr(%i, %i){\n",this->location.begin.line, this->location.begin.column);
+	printf("%s", name.c_str());
+	printf("			}\n");
+	return;
+}
+
+void FunctionCall::printTree(){
+	printf("			func call(%i, %i){\n",this->location.begin.line, this->location.begin.column);
+	printf("func: %s", n.c_str());
+	args->printTree();
+	const char* types = ["error", "none", "void", "int", "float", "logical"];
+
+	for(int i=0; i<arg_types.size(); i++){
+		printf("type %i: %s\n", i, types[arg_types[i]]);
+	}
+	printf("			}\n");
+	return;
+}
+
+
+
 /*
 std::unique_ptr<Root> Root::optimize() {
 		std::unique_ptr<FunctionList> optFuncList = funcList.optimize();
