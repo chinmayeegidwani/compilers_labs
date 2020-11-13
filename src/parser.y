@@ -276,7 +276,7 @@ factor
 	: TOK_INT { $$ = make_node<Int>(@$, $1); }
 	| TOK_FLOAT { $$ = make_node<Float>(@$, $1); }
 	| TOK_TRUE { $$ = make_node<Bool>(@$, true); }
-	| TOK_FALSE { $$ = make_node<Bool>(@$, true); }
+	| TOK_FALSE { $$ = make_node<Bool>(@$, false); }
 	| TOK_LPAREN expression TOK_RPAREN { $$ = $2; }
 	| name {$$ = make_node<NameExpression>(@$, $1); }
 	| function_call { $$ = $1; }

@@ -51,9 +51,11 @@ public:
 	yy::location location;
 
 	virtual ~Node() = 0;
-
-	virtual Type checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) = 0; //checks for type_decl, type_mismatch, type_bool, type_return and duplicate_decl for variables (not functions), returns the type of the node it is called on
-
+	/* checks for type_decl, type_mismatch, type_bool, type_return and duplicate_decl 
+	 * for variables (not functions), returns the type of the node it is called on
+	 */
+	virtual Type checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) = 0; 
+	virtual Node optimize() = 0;
 //	virtual Type checkReturnType(std::map<std::string, Type> & functionReturnType) { return NONE };
 };
 
@@ -68,11 +70,24 @@ public:
 	Type checkType(std::map<std::string, Type> & parentScope, std::map<std::string, Type> & functionReturnType) override {
 		return (*funcList).checkType(parentScope, functionReturnType);
 	}
+
+	std::unique_ptr<Root> optimize(){
+			// make new node
+			// make new root node - opt root
+			// optRoot -> funcList = optimize(this->funcList)
+			std::unique_ptr<FunctionList> optFuncList = funcList.optimize();
+			optRoot = make_node<Root>(this->location, optFuncList);
+			return optRoot;
+	}
 };
 
 class Function: public Node {
 	virtual Type getType() = 0;
 	virtual std::string getName() = 0;
+	// optimize, new node needed?
+	optimize(){
+		return;
+	}
 };
 
 class FunctionList: public Node {
@@ -95,6 +110,16 @@ public:
 
 		return res;
 	}
+
+	std::unique_ptr<FunctionList> optimize(){
+		std::vector<std::unique_ptr<Function>> optList;
+
+		for(int i = 0; i < list.size; i++){
+			optList[i] = list[i] -> optimize();
+		}
+		optFuncList = make_node<FunctionList> (this->location, optList);
+		return optFuncList;
+	}
 };
 
 class FunctionDeclaration: public Function {
@@ -113,6 +138,19 @@ public:
 		functionReturnType[name] = type;
 		Type res = paramList -> checkType(parentScope, functionReturnType);
 		return type;
+	}
+
+	std::unique_ptr<FunctionDeclaration> optimize(){
+		Type optType;
+		std::string optName;
+		std::unique_ptr<ParameterList> optParamList;
+
+		optType = type -> optimize();
+		optName = name -> optimize();
+		optParamList = paramList -> optimize();
+
+		optFuncDecl = make_node<FunctionDeclaration>(this->location, optType, optName, optParamList);
+		return optFuncDecl;
 	}
 };
 
@@ -142,6 +180,18 @@ public:
 
 		return type;
 	}
+
+	std::unique_ptr<FunctionDefinition> optimize(){
+		std::unique_ptr<FunctionDeclaration> optFuncDecl;
+		std::unique_ptr<Block> optBlockNode;
+		Type optType;
+
+		optFuncDecl = funcDecl -> optimize();
+		optBlockNode = blockNode;
+
+		funcDefn = make_node<FunctionDefinition>(this-> location, optFuncDecl, optBlockNode);
+		return funcDefn;
+	}
 	
 
 };
@@ -158,6 +208,15 @@ class ParameterList: public Node {
 				res = (*paramList)[i]->checkType(parentScope, functionReturnType);
 			}
 			return res;
+		}
+
+		std::unique_ptr<ParameterList> optimize(){
+			std::unique_ptr<std::vector<std::unique_ptr<Declaration>>> optParamList;
+			for(int i = 0; i < (*paramList).size; i++){
+				optParamList[i] = paramList[i] -> optimize();
+			}
+			parameterList = make_node<ParameterList>(this->location);
+			return parameterList;
 		}
 };
 
@@ -190,6 +249,24 @@ class Suite: public Block{
 
 			return res;
 		}
+
+		std::unique_ptr<Suite> optimize(){
+			std::vector<std::unique_ptr<Node>> optSuiteList;
+
+			for(int i = 0; i < suiteList.size(); i++){
+				if(!suiteList[i]->optimize()){
+					// null ptr returned, so suite eliminated further down
+					// skip this suite
+					continue;
+				}
+				optSuiteList.push_back(suiteList[i] -> optimize());
+			}
+			optSuite = make_node<Suite>(this->location);
+			return optSuite;
+		}
+
+		bool isBool(){return false;}
+
 };
 
 class SingleStatement : public Node {};
@@ -210,6 +287,15 @@ public:
 		return NONE;
 	}
 
+	std::unique_ptr<ExpressionStatement> optimize(){
+		std::unique_ptr<Expression> optExpr;
+		optExpr = expr -> optimize();
+		optExpressionStatement = make_node<ExpressionStatement>(this->location, optExpr);
+		return optExpressionStatement;
+	}
+
+	
+
 }
 class Declaration: public SingleStatement {
 	public:
@@ -228,6 +314,16 @@ class Declaration: public SingleStatement {
 			}
 			parentScope[n] = t;
 			return NONE;
+		}
+
+		std::unique_ptr<Declaration> optimize(){
+			Type optType;
+			std::string optName;
+
+			optType = type->optimize();
+			optName = name;
+
+			optDeclaration = make_node<Declaration>(this->location, optType, optName);
 		}
 };
 
@@ -252,6 +348,17 @@ public:
 			printf("[output] type_mismatch %i %i \n", this->location.begin.line, this->location.begin.column);
 		}
 		return NONE;	
+	}
+
+	std::unique_ptr<DeclarationAssign> optimize(){
+		std::unique_ptr<Declaration> optDecl;
+		std::unique_ptr<Expression> optExpr;
+
+		optDecl = decl->optimize();
+		optExpr = expr->optimize();
+
+		optDeclAssign = make_node<DeclarationAssign>(this->location, optDecl, optExpr);
+		return optDeclAssign;
 	}
 };
 
@@ -279,6 +386,16 @@ public:
 			printf("[output] type_mismatch: %i %i \n", this->location.begin.line, this->location.begin.column);
 		}
 		return NONE;
+	}
+
+	std::unique_ptr<SimpleAssign> optimize(){
+		std::string optN;
+		std::unique_ptr<Expression> optExpr;
+
+		optN = n;
+		optExpr = expr->optimize();
+		optSimpleAss = make_node<SimpleAssign>(this->location, optN, optExpr);
+		return optSimpleAss;
 	}
 };
 
@@ -312,6 +429,19 @@ public:
 		}
 
 		return NONE;
+	}
+
+	std::unique_ptr<AugmentedAssign> optimize(){
+		std::string optN;
+		std::unique_ptr<Expression> optExpr;
+		AugmentedAssignOp opOp;
+
+		optN = n;
+		optExpr = expr->optimize();
+		opOp = op;
+
+		optAugmentedAss = make_node<AugmentedAssign>(this->location, optN, optExpr, opOp);
+		return optAugmentedAss;
 	}
 };
 
@@ -369,6 +499,32 @@ public:
 		res = b -> checkType(scope, functionReturnType);
 		return res;
 	}
+
+	
+	
+	std::unique_ptr<Block> optimize(){
+		if(expr->isBool()){
+			if(expr->whichBool){
+				// if expression == true, return block
+				std::unique_ptr<Block> optb;
+				optb = b;
+				return optb;
+			} else{
+				// if expression == false, return null
+				return nullptr;
+			}
+		} else {
+			// if expression is not a boolean
+			std::unique_ptr<Expression> optExpr;
+			std::unique_ptr<Block> optb;
+
+			optb = b;
+			optExpr = expr->optimize();
+			optIf = make_node<If>(this->location, optExpr, optb);
+			return optIf;
+		}
+	}
+
 };
 
 class For: public CompoundStatement {
@@ -459,6 +615,8 @@ public:
 
 class Expression : public Node {
 	Type type;
+	bool isConst() {return false;}
+	bool isBool(){return false;}
 };
 
 class TernaryExpression : public Expression {
@@ -490,6 +648,8 @@ public:
 		type = res1;
 		return type;
 	}
+
+
 };
 
 class BinaryExpression : public Expression {
@@ -523,10 +683,44 @@ public:
 			case LE: type = LOGICAL;
 			case LT: type = LOGICAL;
 			case GE: type = LOGICAL;
-			case GT: type = LOGICAL; 
+			case GT: type = LOGICAL;
 		}
 		return type;
 	}
+
+	std::unique_ptr<Expression> optimize(){
+		// if oexpr->isconst and aexpr->isconst,
+		// do the actual expression and return
+		if(Expression1->isConst() && Expression2->isConst()){
+			std::unique_ptr<Node> data1;
+			std::unique_ptr<Node> data2;
+			std::unique_ptr<Node> ret;
+			data1 = Expression1->getData(); // return pointer to data
+			data2 = Expression2->getData();
+			switch(op){
+				case PLUS:
+					ret = (*data1) + (*data2);
+					return ret;
+				case MINUS:
+					ret = (*data1) - (*data2);
+					return ret;
+				case MUL:
+					ret = (*data1) * (*data2);
+					return ret;
+				case DIV:
+					ret = (*data1) / (*data2);
+					return ret;
+				case LE:
+					return false;
+
+
+			}
+		}
+	}
+
+	bool isConst(){return false;}
+
+	bool isBool(){return false;}
 }
 
 class CastExpression : public Expression {
@@ -544,7 +738,10 @@ public:
 			return ERROR;
 		}
 		return type;
-	}	
+	}
+
+	bool isBool(){return false;}
+	bool isConst(){return false;}
 };
 
 class UnaryMinusExpression : public Expression {
@@ -559,6 +756,9 @@ public:
 		Type res = expr -> checkType(parentScope);
 		
 	}
+
+	bool isBool(){return false;}
+	bool isConst(){return false;}
 };
 
 class Int : public Expression {
@@ -572,6 +772,9 @@ public:
 	bool checkType(std::map<std::string, Type> & parentScope) override {
 		return true;
 	}
+
+	bool isBool(){return false;}
+	bool isConst(){return true;}
 };
 
 class Float : public Expression {
@@ -581,6 +784,9 @@ public:
 	Float(float arg) {
 		data = arg;
 	}
+
+	bool isBool(){return false;}
+	bool isConst(){return true;}
 };
 
 class Bool : public Expression {
@@ -594,6 +800,12 @@ public:
 	bool checkType(std::map<std::string, Type> & parentScope) override {
 		return true;
 	}
+
+	bool isBool(){return true;}
+	bool whichBool(){
+		if (data){return true;} else{return false;}
+	}
+	bool isConst(){return true;}
 };
 
 class NameExpression : public Expression {
@@ -606,6 +818,8 @@ public:
 	bool checkType(std::map<std::string, Type> & parentScope) override {
 		return true;
 	}
+
+	bool isConst(){return false;}
 };
 
 class FunctionCall : public Expression {
@@ -616,6 +830,7 @@ public:
 	FunctionCall(std::string arg) {
 		n = arg;
 	}
+	bool isConst(){return false;}
 };
 
 
