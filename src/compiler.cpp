@@ -63,12 +63,24 @@ int parse(char const* path, std::unique_ptr<Node>& root) {
 }
 
 bool verify_ast(Node* root) {
-	std::map<std::string, Type> scope;
+	printf("Called verify ast \n");
+	if(!(root->checkFuncDuplicates())){
+		printf("Called checkFuncDuplicates \n");
+		return false;
+	}
+	std::map<std::string, Type> scopet
 	Type result = (*root).checkType(scope);
 	if(result == ERROR) {
+		printf("Called checkType \n");
 		return false;
 	}
 	if(!(*root).checkReturn()) {
+		printf("Called checkReturn \n");
+		return false;
+	}
+	std::map<std::string, std::vector<Type>> func_args;
+	if(!(*root).checkTypeArg(func_args)) {
+		printf("Called checkTypeArg \n");
 		return false;
 	}
 	return true;
@@ -76,8 +88,8 @@ bool verify_ast(Node* root) {
 
 std::unique_ptr<Node> optimize(std::unique_ptr<Node> root) {
 	// TODO: lab 3; return a new tree
-	std::unique_ptr<Node> result = root.optimize();
-	return result;
+//	std::unique_ptr<Node> result = root.optimize();
+	return root;
 }
 
 void print_ast(Node* root) {

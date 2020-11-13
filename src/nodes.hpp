@@ -59,8 +59,8 @@ public:
 
 	virtual bool checkReturn() { return false; }
 	virtual bool isReturn() { return false; }
-	virtual bool checkFuncDuplicates() { return false; };
-	virtual Node optimize() = 0;
+	virtual bool checkFuncDuplicates() { return false; }
+	virtual bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) {return true; }
 
 };
 
@@ -75,14 +75,8 @@ public:
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkReturn() override;
 	bool checkFuncDuplicates() override;
-	std::unique_ptr<Root> optimize(){
-			// make new node
-			// make new root node - opt root
-			// optRoot -> funcList = optimize(this->funcList)
-			std::unique_ptr<FunctionList> optFuncList = funcList.optimize();
-			optRoot = make_node<Root>(this->location, optFuncList);
-			return optRoot;
-	}
+	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
+//	std::unique_ptr<Root> optimize() override;
 };
 
 class Function: public Node {
@@ -101,15 +95,8 @@ public:
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkReturn() override;
 	bool checkFuncDuplicates() override;
-	std::unique_ptr<FunctionList> optimize(){
-	std::vector<std::unique_ptr<Function>> optList;
-
-	for(int i = 0; i < list.size; i++){
-		optList[i] = list[i] -> optimize();
-	}
-	optFuncList = make_node<FunctionList> (this->location, optList);
-	return optFuncList;
-	}
+	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
+//	std::unique_ptr<FunctionList> optimize();
 };
 
 class FunctionDeclaration: public Function {
@@ -124,21 +111,11 @@ public:
 		paramList = std::move(param_list);
 	}
 
+	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkReturn() override;
 	bool setDefDecl(std::set<std::string> & declared, std::set<std::string> & defined) override;
-	std::unique_ptr<FunctionDeclaration> optimize(){
-		Type optType;
-		std::string optName;
-		std::unique_ptr<ParameterList> optParamList;
-
-		optType = type -> optimize();
-		optName = name -> optimize();
-		optParamList = paramList -> optimize();
-
-		optFuncDecl = make_node<FunctionDeclaration>(this->location, optType, optName, optParamList);
-		return optFuncDecl;
-	}
+//	std::unique_ptr<FunctionDeclaration> optimize();
 };
 
 class FunctionDefinition: public Function{
@@ -152,20 +129,10 @@ public:
 		blockNode = std::move(block);
 	}
 
+	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkReturn() override;
 	bool setDefDecl(std::set<std::string> & declared, std::set<std::string> & defined) override;
-	std::unique_ptr<FunctionDefinition> optimize(){
-		std::unique_ptr<FunctionDeclaration> optFuncDecl;
-		std::unique_ptr<Block> optBlockNode;
-		Type optType;
-
-		optFuncDecl = funcDecl -> optimize();
-		optBlockNode = blockNode;
-
-		funcDefn = make_node<FunctionDefinition>(this-> location, optFuncDecl, optBlockNode);
-		return funcDefn;
-	}
 
 };
 
@@ -175,14 +142,6 @@ class ParameterList: public Node {
 
 		ParameterList(){}
 		Type checkType(std::map<std::string, Type> & scope) override;
-		std::unique_ptr<ParameterList> optimize(){
-			std::unique_ptr<std::vector<std::unique_ptr<Declaration>>> optParamList;
-			for(int i = 0; i < (*paramList).size; i++){
-				optParamList[i] = paramList[i] -> optimize();
-			}
-			parameterList = make_node<ParameterList>(this->location);
-			return parameterList;
-		}
 };
 
 class Block: public Node {};
@@ -192,25 +151,11 @@ class Suite: public Block{
 		std::vector<std::unique_ptr<Node>> suiteList;
 
 		Suite(){}
-
+		bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 		Type checkType(std::map<std::string, Type> & scope) override;
 		bool checkReturn() override;
-		std::unique_ptr<Suite> optimize(){
-			std::vector<std::unique_ptr<Node>> optSuiteList;
 
-			for(int i = 0; i < suiteList.size(); i++){
-				if(!suiteList[i]->optimize()){
-					// null ptr returned, so suite eliminated further down
-					// skip this suite
-					continue;
-				}
-				optSuiteList.push_back(suiteList[i] -> optimize());
-			}
-			optSuite = make_node<Suite>(this->location);
-			return optSuite;
-		}
-
-		bool isBool(){return false;
+		bool isBool(){ return false; };
 };
 
 class SingleStatement : public Node {};
@@ -224,39 +169,21 @@ public:
 	}
 
 	Type checkType(std::map<std::string, Type> & scope) override;
+	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 
 };
 
-	std::unique_ptr<ExpressionStatement> optimize(){
-		std::unique_ptr<Expression> optExpr;
-		optExpr = expr -> optimize();
-		optExpressionStatement = make_node<ExpressionStatement>(this->location, optExpr);
-		return optExpressionStatement;
+class Declaration: public SingleStatement {
+public:
+	Type type;
+	std::string name;
+
+	Declaration(Type t, std::string n){
+		type = t;
+		name = n;
 	}
 
-	
-
-}
-class Declaration: public SingleStatement {
-	public:
-		Type type;
-		std::string name;
-
-		Declaration(Type t, std::string n){
-			type = t;
-			name = n;
-		}
-
-		Type checkType(std::map<std::string, Type> & scope) override;
-		std::unique_ptr<Declaration> optimize(){
-			Type optType;
-			std::string optName;
-
-			optType = type->optimize();
-			optName = name;
-
-			optDeclaration = make_node<Declaration>(this->location, optType, optName);
-		}
+	Type checkType(std::map<std::string, Type> & scope) override;
 };
 
 class DeclarationAssign: public SingleStatement {
@@ -270,16 +197,7 @@ public:
 	}
 
 	Type checkType(std::map<std::string, Type> & scope) override;
-	std::unique_ptr<DeclarationAssign> optimize(){
-		std::unique_ptr<Declaration> optDecl;
-		std::unique_ptr<Expression> optExpr;
-
-		optDecl = decl->optimize();
-		optExpr = expr->optimize();
-
-		optDeclAssign = make_node<DeclarationAssign>(this->location, optDecl, optExpr);
-		return optDeclAssign;
-	}
+	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 };
 
 class SimpleAssign: public SingleStatement {
@@ -293,15 +211,7 @@ public:
 	}
 
 	Type checkType(std::map<std::string, Type> & scope) override;
-	std::unique_ptr<SimpleAssign> optimize(){
-		std::string optN;
-		std::unique_ptr<Expression> optExpr;
-
-		optN = n;
-		optExpr = expr->optimize();
-		optSimpleAss = make_node<SimpleAssign>(this->location, optN, optExpr);
-		return optSimpleAss;
-	}
+	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 };
 
 class AugmentedAssign: public SingleStatement {
@@ -317,18 +227,7 @@ public:
 	}
 
 	Type checkType(std::map<std::string, Type> & scope) override;
-	std::unique_ptr<AugmentedAssign> optimize(){
-		std::string optN;
-		std::unique_ptr<Expression> optExpr;
-		AugmentedAssignOp opOp;
-
-		optN = n;
-		optExpr = expr->optimize();
-		opOp = op;
-
-		optAugmentedAss = make_node<AugmentedAssign>(this->location, optN, optExpr, opOp);
-		return optAugmentedAss;
-	}
+	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 };
 
 class Break: public SingleStatement {
@@ -358,6 +257,7 @@ public:
 	}
 
 	Type checkType(std::map<std::string, Type> & scope) override;
+	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 	bool isReturn() override;
 };
 
@@ -374,6 +274,8 @@ public:
 	}
 
 	Type checkType(std::map<std::string, Type> & scope) override;
+	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
+/*
 	std::unique_ptr<Block> optimize(){
 		if(expr->isBool()){
 			if(expr->whichBool){
@@ -396,7 +298,7 @@ public:
 			return optIf;
 		}
 	}
-
+*/
 };
 
 class For: public CompoundStatement {
@@ -414,6 +316,7 @@ public:
 	}
 
 	Type checkType(std::map<std::string, Type> & scope) override;
+	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 };
 
 class While: public CompoundStatement {
@@ -427,6 +330,7 @@ public:
 	}
 
 	Type checkType(std::map<std::string, Type> & scope) override;
+	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 };
 
 class Expression : public Node {
@@ -449,6 +353,7 @@ public:
 	}
 
 	Type checkType(std::map<std::string, Type> & scope) override;
+	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 };
 
 class BinaryExpression : public Expression {
@@ -464,6 +369,7 @@ public:
 	}
 
 	Type checkType(std::map<std::string, Type> & scope) override;
+	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 };
 
 class CastExpression : public Expression {
@@ -476,6 +382,7 @@ public:
 	}
 
 	Type checkType(std::map<std::string, Type> & scope) override;
+	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 };
 
 class UnaryMinusExpression : public Expression {
@@ -487,6 +394,7 @@ public:
 	}
 
 	Type checkType(std::map<std::string, Type> & scope) override;
+	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 };
 
 class Int : public Expression {
@@ -536,15 +444,14 @@ class FunctionCall : public Expression {
 public:
 	std::string n;
 	std::unique_ptr<std::vector<std::unique_ptr<Expression>>>  args;
+	std::vector<Type> arg_types;
 
 	FunctionCall(std::string arg) {
 		n = arg;
 	}
 
 	Type checkType(std::map<std::string, Type> & scope) override;
+	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 };
-
-
-
 
 #endif // ECE467_NODE_HPP_INCLUDED

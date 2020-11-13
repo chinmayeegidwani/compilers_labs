@@ -347,6 +347,15 @@ Type FunctionCall::checkType(std::map<std::string, Type> & scope) {
 		return type;
 	}
 	type = scope[n];
+	Type temp;
+	for(unsigned long int i = 0; i < (*args).size(); i++) {
+		temp = (*args)[i] -> checkType(scope);
+		if(temp == ERROR) {
+			return ERROR;
+		}
+		arg_types.push_back(temp);
+	}
+
 	return type;
 }
 
@@ -389,10 +398,12 @@ bool Suite::checkReturn() {
 }
 
 bool Root::checkFuncDuplicates() {
+	printf("Reached the call to Root \n");
 	return funcList->checkFuncDuplicates();
 }
 
 bool FunctionList::checkFuncDuplicates() {
+	printf("Reached the call to Function List \n");
 	std::set<std::string> declared;
 	std::set<std::string> defined;
 	bool res = true;
@@ -403,6 +414,7 @@ bool FunctionList::checkFuncDuplicates() {
 }
 
 bool FunctionDeclaration::setDefDecl(std::set<std::string> & declared, std::set<std::string> & defined) {
+	printf("Reached the call to Function Declaration \n");
 	if(declared.find(name) != declared.end()) {
 		printf("[output] duplicate_decl: %i %i \n", this->location.begin.line, this->location.begin.column);
 		return false;
@@ -413,6 +425,7 @@ bool FunctionDeclaration::setDefDecl(std::set<std::string> & declared, std::set<
 }
 
 bool FunctionDefinition::setDefDecl(std::set<std::string> & declared, std::set<std::string> & defined) {
+	printf("Reached the call to Function Definition \n");
 	if(defined.find(funcDecl -> name) != defined.end()) {
 		printf("[output] duplicated_decl: %i %i \n", this->location.begin.line, this->location.begin.column);
 		return false;
@@ -423,11 +436,194 @@ bool FunctionDefinition::setDefDecl(std::set<std::string> & declared, std::set<s
 	return true;
 }
 
+bool Root::checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) {
+	return funcList -> checkTypeArg(funcSig);
+}
 
+bool FunctionList::checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) {
+	bool result = true;
+	for(unsigned long int i = 0; i < list.size(); i++) {
+		result = result && list[i] -> checkTypeArg(funcSig);	
+	}
+	return result;
+}
 
+bool FunctionDeclaration::checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) {
+	if(funcSig.find(name) != funcSig.end()) {
+		return true;
+	}
 
+	std::vector<Type> args;
+	funcSig.insert({name, args});
+	for(unsigned long int i = 0; i < (*(this -> paramList -> paramList)).size(); i++) {
+		funcSig[name].push_back((*(this->paramList->paramList))[i] -> type);
+	}
+	return true;
+}
 
+bool FunctionDefinition::checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) {
+	bool res = funcDecl -> checkTypeArg(funcSig);
+	if(!res) {
+		return res;	
+	}
+	
+	res = blockNode -> checkTypeArg(funcSig);
+	return res;
+}
 
+bool Suite::checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) {
+	bool res = true;
+	for(unsigned long int i = 0; i < suiteList.size(); i++) {
+		res = suiteList[i] -> checkTypeArg(funcSig);
+		if(!res) {
+			return res;
+		}
+	}
+	return res;
+}
 
+bool ExpressionStatement::checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) { 
+	return expr -> checkTypeArg(funcSig);
+}
 
+bool DeclarationAssign::checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) {
+	return expr -> checkTypeArg(funcSig);
+}
+
+bool SimpleAssign::checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) {
+	return expr -> checkTypeArg(funcSig);
+}
+
+bool AugmentedAssign::checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) {
+	return expr -> checkTypeArg(funcSig);
+}
+
+bool ReturnNotVoid::checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) {
+	return expr -> checkTypeArg(funcSig);
+}
+
+bool If::checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) {
+	bool res = expr -> checkTypeArg(funcSig);
+	res = res && b -> checkTypeArg(funcSig);
+	return res;
+}
+
+bool For::checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) {
+	bool res = true;	
+	if(s1) {
+		res = res && (s1 -> checkTypeArg(funcSig));
+	}
+
+	if(expr) {
+		res = res && (expr -> checkTypeArg(funcSig));	
+	}
+
+	if(s2) {
+		res = res && (expr -> checkTypeArg(funcSig));	
+	}
+	
+	res = res && (b -> checkTypeArg(funcSig));
+	return res;
+}
+
+bool While::checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) {
+	bool res = true;
+	res = res && (expr -> checkTypeArg(funcSig));
+	res = res && (b -> checkTypeArg(funcSig));
+	return res;
+}
+
+bool TernaryExpression::checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) {
+	bool res = true;
+	res = res && oExpression -> checkTypeArg(funcSig);
+	res = res && tExpression1 -> checkTypeArg(funcSig);
+	res = res && tExpression2 -> checkTypeArg(funcSig);
+	return res;
+}
+
+bool BinaryExpression::checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) {
+	bool res = true;
+	res = res && expression1 -> checkTypeArg(funcSig);
+	res = res && expression2 -> checkTypeArg(funcSig);
+	return res;
+}
+
+bool CastExpression::checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) {
+	return cExpression -> checkTypeArg(funcSig);
+}
+
+bool UnaryMinusExpression::checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) {
+	return expr -> checkTypeArg(funcSig);
+}
+
+bool FunctionCall::checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) {
+	if(funcSig[n].size() != arg_types.size()) {
+		printf("[Output] type_arg: %i %i \n", this->location.begin.line, this->location.begin.column);
+		return false;	
+	}
+
+	for(unsigned long int i = 0; i < arg_types.size(); i++) {
+		if(arg_types[i] != (funcSig[n])[i]) {
+			return false;
+		}
+	}
+	return true;
+}
+
+/*
+std::unique_ptr<Root> Root::optimize() {
+		std::unique_ptr<FunctionList> optFuncList = funcList.optimize();
+		optRoot = make_node<Root>(this->location, optFuncList);
+		return optRoot;
+}
+
+std::unique_ptr<FunctionList> FunctionList::optimize(){
+	std::vector<std::unique_ptr<Function>> optList;
+
+	for(int i = 0; i < list.size; i++){
+		optList[i] = list[i] -> optimize();
+	}
+	optFuncList = make_node<FunctionList> (this->location, optList);
+	return optFuncList;
+}
+
+std::unique_ptr<FunctionDeclaration> FunctionDeclaration::optimize(){
+	Type optType;
+	std::string optName;
+	std::unique_ptr<ParameterList> optParamList;
+
+	optType = type -> optimize();
+	optName = name -> optimize();
+	optParamList = paramList -> optimize();
+
+	optFuncDecl = make_node<FunctionDeclaration>(this->location, optType, optName, optParamList);
+	return optFuncDecl;
+}
+
+std::unique_ptr<Suite> Suite::optimize(){
+	std::vector<std::unique_ptr<Node>> optSuiteList;
+
+	for(int i = 0; i < suiteList.size(); i++){
+		if(!suiteList[i]->optimize()){
+			// null ptr returned, so suite eliminated further down
+			// skip this suite
+			continue;
+		}
+		optSuiteList.push_back(suiteList[i] -> optimize());
+	}
+	optSuite = make_node<Suite>(this->location);
+	return optSuite;
+}
+
+std::unique_ptr<DeclarationAssign> DeclarationAssign::optimize(){
+	std::unique_ptr<Declaration> optDecl;
+	std::unique_ptr<Expression> optExpr;
+
+	optDecl = decl->optimize();
+	optExpr = expr->optimize();
+
+	optDeclAssign = make_node<DeclarationAssign>(this->location, optDecl, optExpr);
+	return optDeclAssign;
+}
+*/
 

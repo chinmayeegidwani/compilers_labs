@@ -63,18 +63,24 @@ int parse(char const* path, std::unique_ptr<Node>& root) {
 }
 
 bool verify_ast(Node* root) {
+	printf("Called verify ast \n");
+	if(!(root->checkFuncDuplicates())){
+		printf("Called checkFuncDuplicates \n");
+		return false;
+	}
 	std::map<std::string, Type> scope;
 	Type result = (*root).checkType(scope);
 	if(result == ERROR) {
-		return false;
-	}
-	if(scope.find("main") == scope.end()) {
-		return false;
-	}
-	if(scope.find("main") != INT) {
+		printf("Called checkType \n");
 		return false;
 	}
 	if(!(*root).checkReturn()) {
+		printf("Called checkReturn \n");
+		return false;
+	}
+	std::map<std::string, std::vector<Type>> func_args;
+	if(!(*root).checkTypeArg(func_args)) {
+		printf("Called checkTypeArg \n");
 		return false;
 	}
 	return true;
@@ -82,6 +88,7 @@ bool verify_ast(Node* root) {
 
 std::unique_ptr<Node> optimize(std::unique_ptr<Node> root) {
 	// TODO: lab 3; return a new tree
+//	std::unique_ptr<Node> result = root.optimize();
 	return root;
 }
 
