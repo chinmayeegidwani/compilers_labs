@@ -578,7 +578,7 @@ void Root::printTree(){
 }
 
 void FunctionList::printTree(){
-	for(int i=0; i < list.size(); i++){
+	for(unsigned long int i=0; i < list.size(); i++){
 		list[i]->printTree();
 	}
 	return;
@@ -586,8 +586,8 @@ void FunctionList::printTree(){
 
 void FunctionDeclaration::printTree(){
 	printf("	func decl (%i, %i) {\n", this->location.begin.line, this->location.begin.column);
-	const char* types = ["error", "none", "void", "int", "float", "logical"];
-	printf("		return type: %s\n", types[t]);
+	const char* types[6] = {"error", "none", "void", "int", "float", "logical"};
+	printf("		return type: %s\n", types[type]);
 	printf("		name: %s\n", name.c_str());
 	paramList->printTree();
 	printf("	} \n");
@@ -596,18 +596,18 @@ void FunctionDeclaration::printTree(){
 
 void FunctionDefinition::printTree(){
 	printf("	func decl (%i, %i) {\n", this->location.begin.line, this->location.begin.column);
-	const char* types = ["error", "none", "void", "int", "float", "logical"];
+	const char* types[6] = {"error", "none", "void", "int", "float", "logical"};
 	funcDecl->printTree();
 	blockNode->printTree();
-	printf("		return type: %s\n", types[t]);
+	printf("		return type: %s\n", types[type]);
 	printf("	} \n");
 	return;
 }
 
 void ParameterList::printTree(){
 	printf("		params(%i, %i)\n", this->location.begin.line, this->location.begin.column);
-	for(int i = 0; i < (*paramList).size(); i++){
-		paramList[i]->printTree();
+	for(unsigned long int i = 0; i < (*paramList).size(); i++){
+		(*paramList)[i]->printTree();
 	}
 	printf("		} \n");
 	return;
@@ -615,7 +615,7 @@ void ParameterList::printTree(){
 
 void Suite::printTree(){
 	printf("	suite (%i, %i)\n", this->location.begin.line, this->location.begin.column);
-	for(int i=0; i<suiteList.size(); i++){
+	for(unsigned long int i=0; i<suiteList.size(); i++){
 		suiteList[i]->printTree();
 	}
 	printf("	} \n");
@@ -631,7 +631,7 @@ void ExpressionStatement::printTree(){
 
 void Declaration::printTree(){
 	printf("		decl (%i, %i)", this->location.begin.line, this->location.begin.column);
-	const char* types = ["error", "none", "void", "int", "float", "logical"];
+	const char* types[6] = {"error", "none", "void", "int", "float", "logical"};
 	printf("%s %s", types[type], name.c_str());
 	printf("		} \n");
 	return;
@@ -656,7 +656,7 @@ void SimpleAssign::printTree(){
 void AugmentedAssign::printTree(){
 	printf("		aug assign(%i, %i)", this->location.begin.line, this->location.begin.column);
 	printf("var name: %s\n", n.c_str());
-	const char* augops = ["plus_assign", "minus_assign", "star_assign", "slash_assign"];
+	const char* augops[4] = {"plus_assign", "minus_assign", "star_assign", "slash_assign"};
 	printf("op: %s\n", augops[op]);
 	expr->printTree();
 	printf("		} \n");
@@ -709,7 +709,7 @@ void BinaryExpression::printTree(){
 	printf("		binary expr(%i, %i){\n",this->location.begin.line, this->location.begin.column);
 	expression1->printTree();
 	expression2->printTree();
-	const char* binops= ["plus", "minus", "mul", "div", "and", "or", "eq", "neq", "lt", "gt", "le", "ge"];
+	const char* binops[12] = {"plus", "minus", "mul", "div", "and", "or", "eq", "neq", "lt", "gt", "le", "ge"};
 	printf("op: %s\n", binops[op]);
 	printf("		}\n");
 	return;
@@ -765,7 +765,7 @@ void FunctionCall::printTree(){
 	printf("			func call(%i, %i){\n",this->location.begin.line, this->location.begin.column);
 	printf("func: %s", n.c_str());
 	args->printTree();
-	const char* types = ["error", "none", "void", "int", "float", "logical"];
+	const char* types[6] = {"error", "none", "void", "int", "float", "logical"};
 
 	for(int i=0; i<arg_types.size(); i++){
 		printf("type %i: %s\n", i, types[arg_types[i]]);
