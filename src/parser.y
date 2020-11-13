@@ -114,7 +114,7 @@ template <typename T, typename... Args> static std::unique_ptr<T> make_node(yy::
 %%
 
 root
-	: function_list { $$ = make_node<Root>(@1, $1); }
+	: function_list { $$ = make_node<Root>(@$, $1); }
 	;
 
 function_list
