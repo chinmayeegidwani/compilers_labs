@@ -764,12 +764,14 @@ void NameExpression::printTree(){
 void FunctionCall::printTree(){
 	printf("			func call(%i, %i){\n",this->location.begin.line, this->location.begin.column);
 	printf("func: %s", n.c_str());
-	args->printTree();
+	//args->printTree();
 	const char* types[6] = {"error", "none", "void", "int", "float", "logical"};
 
 	for(unsigned long int i=0; i<arg_types.size(); i++){
-		printf("type %i: %s\n", i, types[arg_types[i]]);
+		printf("type %u: %s\n", i, types[arg_types[i]]);
+		(*args)[i]->printTree();
 	}
+
 	printf("			}\n");
 	return;
 }
