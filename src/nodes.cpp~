@@ -8,7 +8,7 @@ Type Root::checkType(std::map<std::string, Type> & scope) {
 		printf("[output] main_function %i %i", this->location.begin.line, this->location.begin.column);
 		return ERROR;
 	}
-	if(scope.find("main") != INT) {
+	if((scope.find("main") -> second) != INT) {
 		printf("[output] main_function %i %i", this->location.begin.line, this->location.begin.column);
 		return ERROR;
 	}
@@ -388,6 +388,40 @@ bool Suite::checkReturn() {
 	return result;
 }
 
+bool Root::checkFuncDuplicates() {
+	return funcList->checkFuncDuplicates();
+}
+
+bool FunctionList::checkFuncDuplicates() {
+	std::set<std::string> declared;
+	std::set<std::string> defined;
+	res = true;
+	for(unsigned long int i = 0; i < list.size(); i++) {
+		res = res && list[i]->setDefDecl(declared, defined);
+	}
+	return res;
+}
+
+bool FunctionDeclaration::setDefDecl(std::set<std::string> & declared, std::set<std::string> & defined) {
+	if(declared.find(name) != declared.end()) {
+		printf("[output] duplicate_decl: %i %i \n", this->location.begin.line, this->location.begin.column);
+		return false;
+	}
+
+	declared.insert(name);
+	return true;
+}
+
+bool FunctionDefinition::setDefDecl(std::set<std::string> & declared, std::set<std::string> & defined) {
+	if(defined.find(funcDecl -> name) != defined.end()) {
+		printf("[output] duplicated_decl: %i %i \n", this->location.begin.line, this->location.begin.column);
+		return false;
+	}
+
+	defined.insert(funcDecl -> name);
+	declared.insert(funcDecl -> name);
+	return true;
+}
 
 
 

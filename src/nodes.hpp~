@@ -5,6 +5,7 @@
 #include <memory>
 #include <vector>
 #include <map>
+#include <set>
 
 enum Type {ERROR, NONE, VOID, INT, FLOAT, LOGICAL};
 typedef enum Type Type;
@@ -46,6 +47,7 @@ class Float;
 class Bool;
 class NameExpression;
 class FunctionCall;
+class FunctionState;
 
 class Node {
 public:
@@ -57,6 +59,7 @@ public:
 
 	virtual bool checkReturn() { return false; }
 	virtual bool isReturn() { return false; }
+	virtual bool checkFuncDuplicates() { return false; };
 
 };
 
@@ -70,9 +73,12 @@ public:
 
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkReturn() override;
+	bool checkFuncDuplicates() override;
 };
 
-class Function: public Node {};
+class Function: public Node {
+	virtual bool setDefDecl(std::set<std::string> & declared, std::set<std::string> & defined) = 0;
+};
 
 class FunctionList: public Node {
 public:
@@ -84,6 +90,7 @@ public:
 	
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkReturn() override;
+	bool checkFuncDuplicates() override;
 };
 
 class FunctionDeclaration: public Function {
@@ -100,6 +107,7 @@ public:
 
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkReturn() override;
+	bool setDefDecl(std::set<std::string> & declared, std::set<std::string> & defined) override;
 };
 
 class FunctionDefinition: public Function{
@@ -115,7 +123,7 @@ public:
 
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkReturn() override;
-	
+	bool setDefDecl(std::set<std::string> & declared, std::set<std::string> & defined) override;
 
 };
 
@@ -136,7 +144,7 @@ class Suite: public Block{
 		Suite(){}
 
 		Type checkType(std::map<std::string, Type> & scope) override;
-		bool checkReturn override;
+		bool checkReturn() override;
 };
 
 class SingleStatement : public Node {};
