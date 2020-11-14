@@ -63,7 +63,7 @@ public:
 	virtual bool isReturn() { return false; }
 	virtual bool checkFuncDuplicates() { return false; }
 	virtual bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) {return true; }
-	virtual std::unique_ptr<Node> optimizeCP() = 0;
+	virtual std::unique_ptr<Node> optimize() {return nullptr};
 
 };
 
@@ -81,12 +81,13 @@ public:
 	bool checkFuncDuplicates() override;
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 	void printTree() override;
-	std::unique_ptr<Root> optimizeCP() override;
+	std::unique_ptr<Node> optimize() override;
 };
 
 class Function: public Node {
 public:
 	virtual bool setDefDecl(std::set<std::string> & declared, std::set<std::string> & defined) = 0;
+	virtual std::unique_ptr<Function> optimizeCP() = 0;
 };
 
 class FunctionList: public Node {
@@ -104,7 +105,7 @@ public:
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 
 	void printTree() override;
-	std::unique_ptr<FunctionList> optimizeCP() override;
+	std::unique_ptr<FunctionList> optimizeCP();
 };
 
 class FunctionDeclaration: public Function {
@@ -124,7 +125,7 @@ public:
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkReturn() override;
 	bool setDefDecl(std::set<std::string> & declared, std::set<std::string> & defined) override;
-	std::unique_ptr<FunctionDeclaration> optimizeCP() override;
+	std::unique_ptr<Function> optimizeCP() override;
 	void printTree() override;
 };
 
@@ -144,7 +145,7 @@ public:
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkReturn() override;
 	bool setDefDecl(std::set<std::string> & declared, std::set<std::string> & defined) override;
-	std::unique_ptr<FunctionDefinition> optimizeCP() override;
+	std::unique_ptr<Function> optimizeCP() override;
 	void printTree() override;
 };
 
@@ -157,15 +158,17 @@ public:
 			paramList = std::make_unique<std::vector<std::unique_ptr<Declaration>>>();
 		}
 		Type checkType(std::map<std::string, Type> & scope) override;
-		std::unique_ptr<ParameterList> optimizeCP() override;
+		std::unique_ptr<ParameterList> optimizeCP();
 		void printTree() override;
 };
 
-class Block: public Node {};
+class Block: public Node {
+	virtual std::unique_ptr<Block> optimizeCP() = 0;
+};
 
 class Suite: public Block{
 	public:
-		std::vector<std::unique_ptr<Node>> suiteList;
+		std::vector<std::unique_ptr<Statement>> suiteList;
 
 		Suite(){
 			printf("Making the suite \n");
@@ -173,12 +176,16 @@ class Suite: public Block{
 		bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 		Type checkType(std::map<std::string, Type> & scope) override;
 		bool checkReturn() override;
-		std::unique_ptr<Suite> optimizeCP() override;
+		std::unique_ptr<Block> optimizeCP() override;
 		bool isBool(){ return false; };
 		void printTree() override;
 };
 
-class SingleStatement : public Node {};
+class Statement : public Node {
+	std::unique_ptr<Statement> optimizeCP() override;
+}
+
+class SingleStatement : public Statement {};
 
 class ExpressionStatement: public SingleStatement {
 public:
@@ -192,7 +199,7 @@ public:
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 	void printTree() override;
-
+	std::unique_ptr<Statement> optimizeCP() override;
 };
 
 class Declaration: public SingleStatement {
@@ -208,7 +215,7 @@ public:
 
 	Type checkType(std::map<std::string, Type> & scope) override;
 	void printTree() override;
-	std::unique_ptr<Declaration> optimizeCP() override;
+	std::unique_ptr<Statement> optimizeCP() override;
 };
 
 class DeclarationAssign: public SingleStatement {
@@ -224,7 +231,7 @@ public:
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 	void printTree() override;
-	std::unique_ptr<DeclarationAssign> optimizeCP() override;
+	std::unique_ptr<Statement> optimizeCP() override;
 };
 
 class SimpleAssign: public SingleStatement {
@@ -240,7 +247,7 @@ public:
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 	void printTree() override;
-	std::unique_ptr<SimpleAssign> optimizeCP() override;
+	std::unique_ptr<Statement> optimizeCP() override;
 };
 
 class AugmentedAssign: public SingleStatement {
@@ -258,21 +265,21 @@ public:
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 	void printTree() override;
-	std::unique_ptr<AugmentedAssign> optimizeCP() override;
+	std::unique_ptr<Statement> optimizeCP() override;
 };
 
 class Break: public SingleStatement {
 
 	Type checkType(std::map<std::string, Type> & scope) override;	
 	void printTree() override;
-	std::unique_ptr<Break> optimizeCP() override;
+	std::unique_ptr<Statement> optimizeCP() override;
 };
 
 class Continue: public SingleStatement {
 
 	Type checkType(std::map<std::string, Type> & scope) override;
 	void printTree() override;
-	std::unique_ptr<Continue> optimizeCP() override;
+	std::unique_ptr<Statement> optimizeCP() override;
 
 };
 
@@ -281,7 +288,7 @@ class ReturnVoid: public SingleStatement {
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool isReturn() override;
 	void printTree() override;
-	std::unique_ptr<ReturnVoid> optimizeCP() override;
+	std::unique_ptr<Statement> optimizeCP() override;
 };
 
 class ReturnNotVoid: public SingleStatement {
@@ -296,10 +303,10 @@ public:
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 	bool isReturn() override;
 	void printTree() override;
-	std::unique_ptr<ReturnNotVoid> optimizeCP() override;
+	std::unique_ptr<Statement> optimizeCP() override;
 };
 
-class CompoundStatement: public Node {};
+class CompoundStatement: public Statement {};
 
 class If: public CompoundStatement {
 public:
@@ -314,7 +321,7 @@ public:
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 	void printTree() override;
-	std::unique_ptr<If> optimizeCP() override;
+	std::unique_ptr<Statement> optimizeCP() override;
 };
 
 class For: public CompoundStatement {
@@ -334,7 +341,7 @@ public:
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 	void printTree() override;
-	std::unique_ptr<For> optimizeCP() override;
+	std::unique_ptr<Statement> optimizeCP() override;
 };
 
 class While: public CompoundStatement {
@@ -350,16 +357,13 @@ public:
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 	void printTree() override;
-	std::unique_ptr<While> optimizeCP() override;
+	std::unique_ptr<Statement> optimizeCP() override;
 };
 
 class Expression : public Node {
 public:
 	Type type;
-	virtual bool isConst() {return false; }
-	virtual bool isBool() {return false; }
-	virtual bool isFloat() {return false; }
-	virtual bool isInt() {return true; }
+	std::unique_ptr<Expression> optimizeCP() = 0;
 };
 
 class TernaryExpression : public Expression {
@@ -377,7 +381,7 @@ public:
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 	void printTree() override;
-	std::unique_ptr<TernaryExpression> optimizeCP() override;
+	std::unique_ptr<Expression> optimizeCP() override;
 };
 
 class BinaryExpression : public Expression {
@@ -427,11 +431,7 @@ public:
 	std::unique_ptr<Expression> optimizeCP() override;
 };
 
-class ConstantExpression : public Expression {
-	bool isConstant() override {return true};
-}
-
-class Int : public ConstantExpression {
+class Int : public Expression {
 public:
 	int data;
 
@@ -441,10 +441,10 @@ public:
 
 	Type checkType(std::map<std::string, Type> & scope) override;
 	void printTree() override;
-	std::unique_ptr<Int> optimizeCP() override;
+	std::unique_ptr<Expression> optimizeCP() override;
 };
 
-class Float : public ConstantExpression {
+class Float : public Expression {
 public:
 	float data;
 
@@ -454,10 +454,10 @@ public:
 	
 	Type checkType(std::map<std::string, Type> & scope) override;
 	void printTree() override;
-	std::unique_ptr<Float> optimizeCP() override;
+	std::unique_ptr<Expression> optimizeCP() override;
 };
 
-class Bool : public ConstantExpression {
+class Bool : public Expression {
 public:
 	bool data;
 
@@ -467,7 +467,7 @@ public:
 
 	Type checkType(std::map<std::string, Type> & scope) override;
 	void printTree() override;
-	std::unique_ptr<Bool> optimizeCP() override;
+	std::unique_ptr<Expression> optimizeCP() override;
 };
 
 class NameExpression : public Expression {
@@ -479,7 +479,7 @@ public:
 
 	Type checkType(std::map<std::string, Type> & scope) override;
 	void printTree() override;
-	std::unique_ptr<NameExpression> optimizeCP() override;
+	std::unique_ptr<Expression> optimizeCP() override;
 };
 
 class FunctionCall : public Expression {
@@ -497,7 +497,7 @@ public:
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 	void printTree() override;
-	std::unique_ptr<FunctionCall> optimizeCP() override;
+	std::unique_ptr<Expression> optimizeCP() override;
 };
 
 #endif // ECE467_NODE_HPP_INCLUDED

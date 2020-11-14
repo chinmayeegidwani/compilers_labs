@@ -91,7 +91,7 @@ template <typename T, typename... Args> static std::unique_ptr<T> make_node(yy::
 %type <std::unique_ptr<Block>> block
 %type <std::unique_ptr<Declaration>> declaration
 %type <std::unique_ptr<Suite>> suite
-%type <std::unique_ptr<Node>> statement
+%type <std::unique_ptr<Statement>> statement
 %type <std::unique_ptr<SingleStatement>> single_statement
 %type <AugmentedAssignOp> augmented_assign
 %type <std::unique_ptr<CompoundStatement>> compound_statement

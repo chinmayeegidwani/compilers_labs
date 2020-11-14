@@ -809,8 +809,8 @@ void ReturnNotVoid::printTree(){
 	return;
 }
 
-std::unique_ptr<Root> Root::optimizeCP() {
-		std::unique_ptr<FunctionList> optFuncList = funcList.optimizeCP();
+std::unique_ptr<Node> Root::optimize() {
+		std::unique_ptr<FunctionList> optFuncList = funcList -> optimizeCP();
 		std::unique_ptr<Root> optRoot = make_node<Root>(this->location, optFuncList);
 		return optRoot;
 }
@@ -825,7 +825,7 @@ std::unique_ptr<FunctionList> FunctionList::optimizeCP(){
 	return optFuncList;
 }
 
-std::unique_ptr<FunctionDeclaration> FunctionDeclaration::optimizeCP(){
+std::unique_ptr<Function> FunctionDeclaration::optimizeCP(){
 	Type optType;
 	std::string optName;
 	std::unique_ptr<ParameterList> optParamList;
@@ -838,7 +838,7 @@ std::unique_ptr<FunctionDeclaration> FunctionDeclaration::optimizeCP(){
 	return optFuncDecl;
 }
 
-std::unique_ptr<FunctionDefinition> FunctionDefinition::optimizeCP() {
+std::unique_ptr<Function> FunctionDefinition::optimizeCP() {
 	std::unique_ptr<FunctionDeclaration> optFuncDecl = funcDecl -> optimizeCP();
 	std::unique_ptr<Block> optBlock = blockNode -> optimizeCP();
 	
@@ -852,7 +852,7 @@ std::unique_ptr<ParameterList> ParameterList::optimizeCP() {
 	}
 	return optParamList;
 }
-std::unique_ptr<Suite> Suite::optimizeCP(){
+std::unique_ptr<Block> Suite::optimizeCP(){
 	std::unique_ptr<Suite> optSuite = make_node<Suite>(this->location);
 
 	for(int i = 0; i < suiteList.size(); i++){
@@ -862,60 +862,60 @@ std::unique_ptr<Suite> Suite::optimizeCP(){
 	return optSuite;
 }
 
-std::unique_ptr<ExpressionStatement> ExpressionStatement::optimizeCP(){
+std::unique_ptr<Statement> ExpressionStatement::optimizeCP(){
 	std::unique_ptr<Expression> exprOpt;
 	exprOpt = expr->optimizeCP();
 	return make_node<ExpressionStatement>(this->location, exprOpt);
 }
 
-std::unique_ptr<Declaration> Declaration::optimizeCP() {
+std::unique_ptr<Statement> Declaration::optimizeCP() {
 	return make_node<Declaration>(this->location, type, name);
 }
 
-std::unique_ptr<DeclarationAssign> DeclarationAssign::optimizeCP(){
+std::unique_ptr<Statement> DeclarationAssign::optimizeCP(){
 	std::unique_ptr<Declaration> optDecl = decl->optimizeCP();
 	std::unique_ptr<Expression> optExpr = expr->optimizeCP();
 
 	return make_node<DeclarationAssign>(this->location, optDecl, optExpr);
 }
 
-std::unique_ptr<SimpleAssign> SimpleAssign::optimizeCP() {
+std::unique_ptr<Statement> SimpleAssign::optimizeCP() {
 	std::unique_ptr<Expression> optExpression = expr -> optimizeCP();
 
 	return make_node<DeclarationAssign>(this->location, n, optExpression);
 }
 
-std::unique_ptr<AugmentedAssign> AugmentedAssign::optimizeCP() {
+std::unique_ptr<Statement> AugmentedAssign::optimizeCP() {
 	std::unique_ptr<Expression> optExpression = expr -> optimizeCP();
 
 	return make_node<AugmentedAssign>(this -> location, n, optExpression);
 }
 
-std::unique_ptr<Break> Break::optimizeCP() {
+std::unique_ptr<Statement> Break::optimizeCP() {
 	return make_node<Break>(this -> location);
 }
 
-std::unique_ptr<Continue> Continue::optimizeCP() {
+std::unique_ptr<Statement> Continue::optimizeCP() {
 	return make_node<Continue>(this -> location);
 }
 
-std::unique_ptr<ReturnVoid> ReturnVoid::optimizeCP() {
+std::unique_ptr<Statement> ReturnVoid::optimizeCP() {
 	return make_node<ReturnVoid>(this -> location);
 }
 
-std::unique_ptr<ReturnNotVoid> ReturnNotVoid::optimizeCP() {
+std::unique_ptr<Statement> ReturnNotVoid::optimizeCP() {
 	std::unique_ptr<Expression> optExpression = expr -> optimizeCP();
 	return make_node<ReturnNotVoid>(this -> location, optExpression);
 }
 
-std::unique_ptr<If> If::optimizeCP() {
+std::unique_ptr<Statement> If::optimizeCP() {
 	std::unique_ptr<Expression> optExpression = expr -> optimizeCP();
 	std::unique_ptr<Block> optBlock = b -> optimizeCP();
 
 	return make_node<If>(this -> location, optExpression, optBlock);
 }
 
-std::unique_ptr<For> For::optimizeCP() {
+std::unique_ptr<Statement> For::optimizeCP() {
 	std::unique_ptr<Node> s1Opt = nullptr;
 	std::unique_ptr<Expression> exprOpt = nullptr;
 	std::unique_ptr<Node> s2Opt = nullptr;
@@ -936,14 +936,14 @@ std::unique_ptr<For> For::optimizeCP() {
 	return make_node<For>(this -> location, s1Opt, s2Opt, exprOpt, bOpt);
 }
 
-std::unique_ptr<While> While::optimizeCP() {
+std::unique_ptr<Statement> While::optimizeCP() {
 	std::unique_ptr<Expression> optExpr = expr -> optimizeCP();
 	std::unique_ptr<Block> optBlock = b -> optimizeCP();
 
 	return make_node<While>(this -> location, optExpr, optBlock);
 }
 
-std::unique_ptr<TernaryExpression> TernaryExpression::optimizeCP() {
+std::unique_ptr<Expression> TernaryExpression::optimizeCP() {
 	std::unique_ptr<Expression> oExpressionOpt = oExpression -> optimizeCP();
 	std::unique_ptr<Expression> tExpression1Opt = tExpression1 -> optimizeCP();
 	std::unique_ptr<Expression> tExpression2OPt = tExpression2 -> optimizeCP();
@@ -1100,23 +1100,23 @@ std::unique_ptr<Expression> UnaryMinusExpression::optimizeCP() {
 
 }
 
-std::unique_ptr<Int> Int::optimizeCP() {
+std::unique_ptr<Expression> Int::optimizeCP() {
 	return make_node<Int>(this->location, data);
 }
 
-std::unique_ptr<Float> Float::optimizeCP() {
+std::unique_ptr<Expression> Float::optimizeCP() {
 	return make_node<Float>(this->location, data);
 }
 
-std::unique_ptr<Bool> Bool::optimizeCP() {
+std::unique_ptr<Expression> Bool::optimizeCP() {
 	return make_node<Bool>(this->location, data);
 }
 
-std::unique_ptr<NameExpression> NameExpression(){
+std::unique_ptr<Expression> NameExpression(){
 	return make_node<NameExpression> (this->location, name);
 }
 
-std::unique_ptr<FunctionCall> FunctionCall(){
+std::unique_ptr<Expression> FunctionCall(){
 	std::string nOpt;
 	std::unique_ptr<std::vector<std::unique_ptr<Expression>>>  argsOpt;
 	std::vector<Type> arg_typesOpt;
