@@ -809,7 +809,6 @@ void ReturnNotVoid::printTree(){
 	return;
 }
 
-
 std::unique_ptr<Root> Root::optimizeCP() {
 		std::unique_ptr<FunctionList> optFuncList = funcList.optimizeCP();
 		std::unique_ptr<Root> optRoot = make_node<Root>(this->location, optFuncList);
@@ -847,32 +846,253 @@ std::unique_ptr<FunctionDefinition> FunctionDefinition::optimizeCP() {
 }
 
 std::unique_ptr<ParameterList> ParameterList::optimizeCP() {
-	std::unique_ptr<std::vector<std::unique_ptr<Declaration>>>  
+	std::unique_ptr<ParameterList>  optParamList = make_node<ParameterList>(this->location);
+	for(unsigned long int i = 0; i < paramList -> size(); i++) {
+		optParamList -> paramList -> push_back ((*paramList)[i] -> optimizeCP());
+	}
+	return optParamList;
 }
-std::unique_ptr<Suite> Suite::optimize(){
-	std::vector<std::unique_ptr<Node>> optSuiteList;
+std::unique_ptr<Suite> Suite::optimizeCP(){
+	std::unique_ptr<Suite> optSuite = make_node<Suite>(this->location);
 
 	for(int i = 0; i < suiteList.size(); i++){
-		if(!suiteList[i]->optimize()){
-			// null ptr returned, so suite eliminated further down
-			// skip this suite
-			continue;
-		}
-		optSuiteList.push_back(suiteList[i] -> optimize());
+		optSuite -> suiteList.push_back(this -> suiteList[i] -> optimizeCP());
 	}
-	optSuite = make_node<Suite>(this->location);
+
 	return optSuite;
 }
 
-std::unique_ptr<DeclarationAssign> DeclarationAssign::optimize(){
-	std::unique_ptr<Declaration> optDecl;
-	std::unique_ptr<Expression> optExpr;
-
-	optDecl = decl->optimize();
-	optExpr = expr->optimize();
-
-	optDeclAssign = make_node<DeclarationAssign>(this->location, optDecl, optExpr);
-	return optDeclAssign;
+std::unique_ptr<Declaration> Declaration::optimizeCP() {
+	return make_node<Declaration>(this->location, type, name);
 }
-*/
 
+std::unique_ptr<DeclarationAssign> DeclarationAssign::optimizeCP(){
+	std::unique_ptr<Declaration> optDecl = decl->optimizeCP();
+	std::unique_ptr<Expression> optExpr = expr->optimizeCP();
+
+	return make_node<DeclarationAssign>(this->location, optDecl, optExpr);
+}
+
+std::unique_ptr<SimpleAssign> SimpleAssign::optimizeCP() {
+	std::unique_ptr<Expression> optExpression = expr -> optimizeCP();
+
+	return make_node<DeclarationAssign>(this->location, n, optExpression);
+}
+
+std::unique_ptr<AugmentedAssign> AugmentedAssign::optimizeCP() {
+	std::unique_ptr<Expression> optExpression = expr -> optimizeCP();
+
+	return make_node<AugmentedAssign>(this -> location, n, optExpression);
+}
+
+std::unique_ptr<Break> Break::optimizeCP() {
+	return make_node<Break>(this -> location);
+}
+
+std::unique_ptr<Continue> Continue::optimizeCP() {
+	return make_node<Continue>(this -> location);
+}
+
+std::unique_ptr<ReturnVoid> ReturnVoid::optimizeCP() {
+	return make_node<ReturnVoid>(this -> location);
+}
+
+std::unique_ptr<ReturnNotVoid> ReturnNotVoid::optimizeCP() {
+	std::unique_ptr<Expression> optExpression = expr -> optimizeCP();
+	return make_node<ReturnNotVoid>(this -> location, optExpression);
+}
+
+std::unique_ptr<If> If::optimizeCP() {
+	std::unique_ptr<Expression> optExpression = expr -> optimizeCP();
+	std::unique_ptr<Block> optBlock = b -> optimizeCP();
+
+	return make_node<If>(this -> location, optExpression, optBlock);
+}
+
+std::unique_ptr<For> For::optimizeCP() {
+	std::unique_ptr<Node> s1Opt = nullptr;
+	std::unique_ptr<Expression> exprOpt = nullptr;
+	std::unique_ptr<Node> s2Opt = nullptr;
+
+	if(s1) {
+		s1Opt = s1 -> optimizeCP();
+	}
+
+	if(expr) {
+		exprOpt = expr -> optimizeCP();
+	}
+
+	if(s2) {
+		s2Opt = s2 -> optimizeCP();
+	}
+
+	std::unique_ptr<Block> bOpt = b -> optimizeCP();
+	return make_node<For>(this -> location, s1Opt, s2Opt, exprOpt, bOpt);
+}
+
+std::unique_ptr<While> While::optimizeCP() {
+	std::unique_ptr<Expression> optExpr = expr -> optimizeCP();
+	std::unique_ptr<Block> optBlock = b -> optimizeCP();
+
+	return make_node<While>(this -> location, optExpr, optBlock);
+}
+
+std::unique_ptr<TernaryExpression> TernaryExpression::optimizeCP() {
+	std::unique_ptr<Expression> oExpressionOpt = oExpression -> optimizeCP();
+	std::unique_ptr<Expression> tExpression1Opt = tExpression1 -> optimizeCP();
+	std::unique_ptr<Expression> tExpression2OPt = tExpression2 -> optimizeCP();
+	return make_node<TernaryExpression>(this -> location, oExpressionOpt, tExpression1Opt, tExpression2OPt);
+}
+
+std::unique_ptr<Expression> BinaryExpression::optimizeCP() {
+	std::unique_ptr expr1Opt = expression1 -> optimizeCP();
+	std::unique_ptr expr2Opt = expression2 -> optimizeCP();
+
+	Int* intOpt1 = dynamic_cast<Int *>(expr1Opt.get());
+	Int* intOpt2 = dynamic_cast<Int *>(expr1Opt.get());
+
+	if(intOpt1 && intOpt2) {
+		switch(op) {
+			case PLUS: return make_node<Int>(this->location, (intOpt1 -> data + intOpt2 -> data));
+			case MINUS: return make_node<Int>(this->location, (intOpt1 -> data + intOpt2 -> data));
+			case MUL: return make_node<Int>(this->location, (intOpt1 -> data * intOpt2 -> data));
+			case DIV: return make_node<Int>(this->location, (intOpt1 -> data / intOpt2 -> data));
+			case AND: return make_node<Bool>(this->location, (intOpt1 -> data && intOpt2 -> data));
+			case OR: return make_node<Bool>(this->location, (intOpt1 -> data || intOpt2 -> data));
+			case EQ: return make_node<Bool>(this->location, (intOpt1 -> data == intOpt2 -> data));
+			case NEQ: return make_node<Bool>(this->location, (intOpt1 -> data != intOpt2 -> data));
+			case LT: return make_node<Bool>(this->location, (intOpt1 -> data < intOpt2 -> data));
+			case LE: return make_node<Bool>(this->location, (intOpt1 -> data <= intOpt2 -> data));
+			case GE: return make_node<Bool>(this->location, (intOpt1 -> data >= intOpt2 ->data));
+			case GT: return make_node<Bool>(this->location, (intOpt1 -> data > intOpt2 -> data));
+			default: std::cout << "Unrecognized binary operator: error" << std::endl;
+		}
+	}
+
+	Float* floatOpt1 = dynamic_cast<Float *>(expr1Opt.get());
+	Float* floatOpt2 = dynamic_cast<Float *>(expr2Opt.get());
+
+	if(floatOpt1 && floatOpt2) {
+		switch(op){
+			case PLUS: return make_node<Float>(this->location, (floatOpt1 -> data + floatOpt2 -> data));
+			case MINUS: return make_node<Float>(this->location, (floatOpt1 -> data + floatOpt2 -> data));
+			case MUL: return make_node<Float>(this->location, (floatOpt1 -> data * floatOpt2 -> data));
+			case DIV: return make_node<Float>(this->location, (floatOpt1 -> data / floatOpt2 -> data));
+			case AND: return make_node<Bool>(this->location, (floatOpt1 -> data && floatOpt2 -> data));
+			case OR: return make_node<Bool>(this->location, (floatOpt1 -> data || floatOpt2 -> data));
+			case EQ: return make_node<Bool>(this->location, (floatOpt1 -> data == floatOpt2 -> data));
+			case NEQ: return make_node<Bool>(this->location, (floatOpt1 -> data != floatOpt2 -> data));
+			case LT: return make_node<Bool>(this->location, (floatOpt1 -> data < floatOpt2 -> data));
+			case LE: return make_node<Bool>(this->location, (floatOpt1 -> data <= floatOpt2 -> data));
+			case GE: return make_node<Bool>(this->location, (floatOpt1 -> data >= floatOpt2 ->data));
+			case GT: return make_node<Bool>(this->location, (floatOpt1 -> data > floatOpt2 -> data));
+			default: std::cout << "Unrecognized binary operator: error" << std::endl; break;
+		}
+	}
+
+	Bool* boolOpt1 = dynamic_cast<Bool *>(expr1Opt.get());
+	Bool* boolOpt2 = dynamic_cast<Bool *>(expr2Opt.get());
+
+	if(boolOpt1 && boolOpt2) {
+		switch (op) {
+			case PLUS: return make_node<Bool>(this->location, (boolOpt1 -> data + boolOpt2 -> data));
+			case MINUS: return make_node<Bool>(this->location, (boolOpt1 -> data + boolOpt2 -> data));
+			case MUL: return make_node<Bool>(this->location, (boolOpt1 -> data * boolOpt2 -> data));
+			case DIV: return make_node<Bool>(this->location, (boolOpt1 -> data / boolOpt2 -> data));
+			case AND: return make_node<Bool>(this->location, (boolOpt1 -> data && boolOpt2 -> data));
+			case OR: return make_node<Bool>(this->location, (boolOpt1 -> data || boolOpt2 -> data));
+			case EQ: return make_node<Bool>(this->location, (boolOpt1 -> data == boolOpt2 -> data));
+			case NEQ: return make_node<Bool>(this->location, (boolOpt1 -> data != boolOpt2 -> data));
+			case LT: return make_node<Bool>(this->location, (boolOpt1 -> data < boolOpt2 -> data));
+			case LE: return make_node<Bool>(this->location, (boolOpt1 -> data <= boolOpt2 -> data));
+			case GE: return make_node<Bool>(this->location, (boolOpt1 -> data >= boolOpt2 ->data));
+			case GT: return make_node<Bool>(this->location, (boolOpt1 -> data > boolOpt2 -> data));
+			default: std::cout << "Unrecognized binary operator: error" << std::endl; break;
+		}
+	}
+
+	return make_node<BinaryExpression>(this->location, expr1Opt, exp2Opt, op);
+}
+
+std::unique_ptr<Expression> CastExpression::optimizeCP() {
+	std::unique_ptr<Expression> optExpr = cExpression -> optimizeCP();
+	
+	Int * intOpt = dynamic_cast<Int *>(optExpr.get());
+
+	if(intOpt) {
+		switch (type) {
+			case INT: return make_node<Int>(this->location, ((int) intOpt -> data));
+			case FLOAT: return make_node<Float>(this->location, ((float) intOpt -> data));
+			case LOGICAL: return make_node<Bool>(this->location, ((bool) intOpt -> data));
+			default: std::cout << "Unrecognized type: error" << std::endl; break;
+		}
+	}
+
+	Float * floatOpt = dynamic_cast<Float *>(optExpr.get());
+
+	if(floatOpt) {
+		switch (type) {
+			case INT: return make_node<Int>(this->location, ((int) floatOpt -> data));
+			case FLOAT: return make_node<Float>(this -> location, ((float) floatOpt -> data));
+			case LOGICAL: return make_node<Bool>(this->location, ((bool) floatOpt -> data));
+			default: std::cout << "Unrecognized type: error" << std::endl; break;
+		}
+	}
+
+	Bool * boolOpt = dynamic_cast<Bool *>(optExpr.get());
+
+	if(boolOpt) {
+		switch (type) {
+			case INT: return make_node<Int>(this->location, ((int) boolOpt -> data));
+			case FLOAT: return make_node<Float>(this->location, ((float) boolOpt -> data));
+			case LOGICAL: return make_nodem<Bool>(this->location, ((bool) boolOpt -> data));
+			default: std::cout << "Unrecognized type: error" << std::endl; break;
+		}
+	}
+
+	return make_node<CastExpression>(this->location, optExpr, type);
+}
+
+std::unique_ptr<Expression> UnaryMinusExpression::optimizeCP() {
+	std::unique_ptr<Expression> optExpr = expr -> optimizeCP();
+
+	Int * intOpt = dynamic_cast<Int *>(optExpr.get());
+
+	if(intOpt) {
+		switch (type) {
+			case INT: return make_node<Int>(this->location, (- (intOpt -> data)));
+			case FLOAT: return make_node<Float>(this->location, (- (intOpt -> data)));
+			case LOGICAL: return make_node<Bool>(this->location, (- (intOpt -> data)));
+			default: std::cout << "Unrecognized type: error" << std::endl; break;
+		}
+	}
+
+	Float * floatOpt = dynamic_cast<Float *>(optExpr.get());
+
+	if(floatOpt) {
+		switch (type) {
+			case INT: return make_node<Int>(this->location, (- (floatOpt -> data)));
+			case FLOAT: return make_node<Float>(this -> location, (- (floatOpt -> data)));
+			case LOGICAL: return make_node<Bool>(this->location, (- (floatOpt -> data)));
+			default: std::cout << "Unrecognized type: error" << std::endl; break;
+		}
+	}
+
+	Bool * boolOpt = dynamic_cast<Bool *>(optExpr.get());
+
+	if(boolOpt) {
+		switch (type) {
+			case INT: return make_node<Int>(this->location, (- (boolOpt -> data)));
+			case FLOAT: return make_node<Float>(this->location, (- (boolOpt -> data)));
+			case LOGICAL: return make_nodem<Bool>(this->location, (- (boolOpt -> data)));
+			default: std::cout << "Unrecognized type: error" << std::endl; break;
+		}
+	}
+
+	return make_node<CastExpression>(this->location, optExpr);
+
+}
+
+std::unique_ptr<Int> Int::optimizeCP() {
+	
+}

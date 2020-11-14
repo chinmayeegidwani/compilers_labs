@@ -62,7 +62,7 @@ public:
 	virtual bool isReturn() { return false; }
 	virtual bool checkFuncDuplicates() { return false; }
 	virtual bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) {return true; }
-	virtual std::unique_ptr<Node> optimize() = 0;
+	virtual std::unique_ptr<Node> optimizeCP() = 0;
 
 };
 
@@ -80,7 +80,7 @@ public:
 	bool checkFuncDuplicates() override;
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 	void printTree() override;
-//	std::unique_ptr<Root> optimize() override;
+	std::unique_ptr<Root> optimizeCP() override;
 };
 
 class Function: public Node {
@@ -103,7 +103,7 @@ public:
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 
 	void printTree() override;
-//	std::unique_ptr<FunctionList> optimize();
+	std::unique_ptr<FunctionList> optimizeCP override;
 };
 
 class FunctionDeclaration: public Function {
@@ -123,8 +123,7 @@ public:
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkReturn() override;
 	bool setDefDecl(std::set<std::string> & declared, std::set<std::string> & defined) override;
-//	std::unique_ptr<FunctionDeclaration> optimize();
-
+	std::unique_ptr<FunctionDeclaration> optimize override;
 	void printTree() override;
 };
 
@@ -144,6 +143,7 @@ public:
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkReturn() override;
 	bool setDefDecl(std::set<std::string> & declared, std::set<std::string> & defined) override;
+	std::unique_ptr<FunctionDefinition> optimize override;
 	void printTree() override;
 };
 
@@ -156,6 +156,7 @@ public:
 			paramList = std::make_unique<std::vector<std::unique_ptr<Declaration>>>();
 		}
 		Type checkType(std::map<std::string, Type> & scope) override;
+		std::unique_ptr<ParameterList> optimize override;
 		void printTree() override;
 };
 
@@ -171,7 +172,7 @@ class Suite: public Block{
 		bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 		Type checkType(std::map<std::string, Type> & scope) override;
 		bool checkReturn() override;
-
+		std::unique_ptr<Suite> optimize override;
 		bool isBool(){ return false; };
 		void printTree() override;
 };
@@ -367,8 +368,10 @@ public:
 class Expression : public Node {
 public:
 	Type type;
-	bool isConst() {return false;}
-	bool isBool(){return false;}
+	virtual bool isConst() {return false; }
+	virtual bool isBool() {return false; }
+	virtual bool isFloat() {return false; }
+	virtual bool isInt() {return true; }
 };
 
 class TernaryExpression : public Expression {
@@ -432,7 +435,10 @@ public:
 	void printTree() override;
 };
 
-class Int : public Expression {
+class ConstantExpression : public Expression {
+	bool isConstant() override {return true};
+}
+class Int : public ConstantExpression {
 public:
 	int data;
 
@@ -444,7 +450,7 @@ public:
 	void printTree() override;
 };
 
-class Float : public Expression {
+class Float : public ConstantExpression {
 public:
 	float data;
 
@@ -456,7 +462,7 @@ public:
 	void printTree() override;
 };
 
-class Bool : public Expression {
+class Bool : public ConstantExpression {
 public:
 	bool data;
 
