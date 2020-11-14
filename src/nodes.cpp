@@ -862,6 +862,12 @@ std::unique_ptr<Suite> Suite::optimizeCP(){
 	return optSuite;
 }
 
+std::unique_ptr<ExpressionStatement> ExpressionStatement::optimizeCP(){
+	std::unique_ptr<Expression> exprOpt;
+	exprOpt = expr->optimizeCP();
+	return make_node<ExpressionStatement>(this->location, exprOpt);
+}
+
 std::unique_ptr<Declaration> Declaration::optimizeCP() {
 	return make_node<Declaration>(this->location, type, name);
 }
@@ -1056,6 +1062,7 @@ std::unique_ptr<Expression> CastExpression::optimizeCP() {
 std::unique_ptr<Expression> UnaryMinusExpression::optimizeCP() {
 	std::unique_ptr<Expression> optExpr = expr -> optimizeCP();
 
+	// returns a nullptr if the cast is not possible
 	Int * intOpt = dynamic_cast<Int *>(optExpr.get());
 
 	if(intOpt) {
@@ -1094,5 +1101,30 @@ std::unique_ptr<Expression> UnaryMinusExpression::optimizeCP() {
 }
 
 std::unique_ptr<Int> Int::optimizeCP() {
-	
+	return make_node<Int>(this->location, data);
+}
+
+std::unique_ptr<Float> Float::optimizeCP() {
+	return make_node<Float>(this->location, data);
+}
+
+std::unique_ptr<Bool> Bool::optimizeCP() {
+	return make_node<Bool>(this->location, data);
+}
+
+std::unique_ptr<NameExpression> NameExpression(){
+	return make_node<NameExpression> (this->location, name);
+}
+
+std::unique_ptr<FunctionCall> FunctionCall(){
+	std::string nOpt;
+	std::unique_ptr<std::vector<std::unique_ptr<Expression>>>  argsOpt;
+	std::vector<Type> arg_typesOpt;
+
+	nOpt = n;
+	arg_typesOpt = arg_types;
+	for(unsigned long int i=0; i<args.size(); i++){
+		argsOpt -> args -> push_back((*args)[i] -> optimizeCP());
+	}
+	return make_node<FunctionCall> (this->location, nOpt);
 }
