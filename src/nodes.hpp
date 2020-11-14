@@ -104,7 +104,7 @@ public:
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 
 	void printTree() override;
-	std::unique_ptr<FunctionList> optimizeCP override;
+	std::unique_ptr<FunctionList> optimizeCP() override;
 };
 
 class FunctionDeclaration: public Function {
