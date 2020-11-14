@@ -93,6 +93,10 @@ Type Suite::checkType(std::map<std::string, Type> & scope) {
 		if(statement_res != NONE) {
 			res = statement_res;
 		}
+		std::cout << "Printing the variables in the scope" << std::endl;
+		for(auto j = scope.begin(); j != scope.end(); j++) {
+			std::cout << j -> first << std::endl;
+		}
 	}
 
 	return res;
@@ -111,11 +115,24 @@ Type Declaration::checkType(std::map<std::string, Type> & scope) {
 		printf("[output] duplicate_decl %i %i \n", this->location.begin.line, this->location.begin.column);
 		return ERROR;
 	}
+
+	std::cout << "Printing the variables in the scope, inside Declaration, for name" << name << std::endl;
+	for(auto j = scope.begin(); j != scope.end(); j++) {
+		std::cout << j -> first << std::endl;
+	}
+
 	scope[name] = type;
+
+	std::cout << "Printing the variables in the scope, inside Declaration" << std::endl;
+	for(auto j = scope.begin(); j != scope.end(); j++) {
+		std::cout << j -> first << std::endl;
+	}
+
 	return NONE;
 }
 
 Type DeclarationAssign::checkType(std::map<std::string, Type> & scope) {
+	std::cout << "Call to checkType DeclarationAssign" << std::endl;
 	Type temp = decl -> checkType(scope);
 	if(temp == ERROR) {
 		return ERROR;
@@ -131,6 +148,7 @@ Type DeclarationAssign::checkType(std::map<std::string, Type> & scope) {
 Type SimpleAssign::checkType(std::map<std::string, Type> & scope) {
 
 	if(scope.find(n) == scope.end()) {
+		printf("Culprit 1 \n");
 		printf("[output] type_decl: %i %i \n", this->location.begin.line, this->location.begin.column);
 		return ERROR;
 	}
@@ -148,6 +166,7 @@ Type SimpleAssign::checkType(std::map<std::string, Type> & scope) {
 Type AugmentedAssign::checkType(std::map<std::string, Type> & scope) {
 
 	if(scope.find(n) == scope.end()) {
+		printf("Culprit 2 \n");
 		printf("[output] type_decl: %i %i \n", this->location.begin.line, this->location.begin.column);
 		return ERROR;
 	}
@@ -335,6 +354,7 @@ Type Bool::checkType(std::map<std::string, Type> & scope) {
 
 Type NameExpression::checkType(std::map<std::string, Type> & scope) {
 	if(scope.find(name) == scope.end()) {
+		printf("Culprit 3 \n");
 		printf("[output] type_decl: %i %i \n", this->location.begin.line, this->location.begin.column);
 		type = ERROR;
 		return type;
@@ -345,6 +365,7 @@ Type NameExpression::checkType(std::map<std::string, Type> & scope) {
 
 Type FunctionCall::checkType(std::map<std::string, Type> & scope) {
 	if(scope.find(n) == scope.end()) {
+		printf("Culprit 4 \n");
 		printf("[output] type_decl: %i %i \n", this->location.begin.line, this->location.begin.column);
 		type = ERROR;
 		return type;
@@ -789,36 +810,45 @@ void ReturnNotVoid::printTree(){
 }
 
 
-/*
-std::unique_ptr<Root> Root::optimize() {
-		std::unique_ptr<FunctionList> optFuncList = funcList.optimize();
-		optRoot = make_node<Root>(this->location, optFuncList);
+std::unique_ptr<Root> Root::optimizeCP() {
+		std::unique_ptr<FunctionList> optFuncList = funcList.optimizeCP();
+		std::unique_ptr<Root> optRoot = make_node<Root>(this->location, optFuncList);
 		return optRoot;
 }
 
-std::unique_ptr<FunctionList> FunctionList::optimize(){
+std::unique_ptr<FunctionList> FunctionList::optimizeCP(){
 	std::vector<std::unique_ptr<Function>> optList;
 
 	for(int i = 0; i < list.size; i++){
-		optList[i] = list[i] -> optimize();
+		optList.push_back(list[i] -> optimizeCP());
 	}
-	optFuncList = make_node<FunctionList> (this->location, optList);
+	std::unique_ptr<FunctionList> optFuncList = make_node<FunctionList> (this->location, optList);
 	return optFuncList;
 }
 
-std::unique_ptr<FunctionDeclaration> FunctionDeclaration::optimize(){
+std::unique_ptr<FunctionDeclaration> FunctionDeclaration::optimizeCP(){
 	Type optType;
 	std::string optName;
 	std::unique_ptr<ParameterList> optParamList;
 
-	optType = type -> optimize();
-	optName = name -> optimize();
-	optParamList = paramList -> optimize();
+	optType = type;
+	optName = name;
+	optParamList = paramList -> optimizeCP();
 
 	optFuncDecl = make_node<FunctionDeclaration>(this->location, optType, optName, optParamList);
 	return optFuncDecl;
 }
 
+std::unique_ptr<FunctionDefinition> FunctionDefinition::optimizeCP() {
+	std::unique_ptr<FunctionDeclaration> optFuncDecl = funcDecl -> optimizeCP();
+	std::unique_ptr<Block> optBlock = blockNode -> optimizeCP();
+	
+	return make_node<FunctionDefinition>(this -> location, optFuncDecl, optBlock);
+}
+
+std::unique_ptr<ParameterList> ParameterList::optimizeCP() {
+	std::unique_ptr<std::vector<std::unique_ptr<Declaration>>>  
+}
 std::unique_ptr<Suite> Suite::optimize(){
 	std::vector<std::unique_ptr<Node>> optSuiteList;
 

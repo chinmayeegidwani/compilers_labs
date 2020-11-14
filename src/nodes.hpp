@@ -6,6 +6,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <iostream>
 
 enum Type {ERROR, NONE, VOID, INT, FLOAT, LOGICAL};
 typedef enum Type Type;
@@ -61,6 +62,7 @@ public:
 	virtual bool isReturn() { return false; }
 	virtual bool checkFuncDuplicates() { return false; }
 	virtual bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) {return true; }
+	virtual std::unique_ptr<Node> optimize() = 0;
 
 };
 
@@ -91,7 +93,7 @@ public:
 	std::vector<std::unique_ptr<Function>> list;
 
 	FunctionList(std::unique_ptr<Function> func){
-		printf("Making the function list");
+		printf("Making the function list \n");
 		list.push_back(std::move(func));
 	}
 	
@@ -133,7 +135,7 @@ public:
 	Type type;
 
 	FunctionDefinition(std::unique_ptr<FunctionDeclaration> function_decl, std::unique_ptr<Block> block){
-		printf("Making the function definition");
+		printf("Making the function definition \n");
 		funcDecl = std::move(function_decl);
 		blockNode = std::move(block);
 	}
@@ -150,7 +152,7 @@ public:
 		std::unique_ptr<std::vector<std::unique_ptr<Declaration>>> paramList;
 
 		ParameterList() {
-			printf("Making the parameter list");
+			printf("Making the parameter list \n");
 			paramList = std::make_unique<std::vector<std::unique_ptr<Declaration>>>();
 		}
 		Type checkType(std::map<std::string, Type> & scope) override;
