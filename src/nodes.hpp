@@ -26,6 +26,7 @@ class FunctionDefinition;
 class ParameterList;
 class Block;
 class Suite;
+class Statement;
 class ExpressionStatement;
 class Declaration;
 class DeclarationAssign;
@@ -63,7 +64,7 @@ public:
 	virtual bool isReturn() { return false; }
 	virtual bool checkFuncDuplicates() { return false; }
 	virtual bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) {return true; }
-	virtual std::unique_ptr<Node> optimize() {return nullptr};
+	virtual std::unique_ptr<Node> optimize() {return nullptr; }
 
 };
 
@@ -182,8 +183,8 @@ class Suite: public Block{
 };
 
 class Statement : public Node {
-	std::unique_ptr<Statement> optimizeCP() override;
-}
+	virtual std::unique_ptr<Statement> optimizeCP() = 0;
+};
 
 class SingleStatement : public Statement {};
 
@@ -363,7 +364,7 @@ public:
 class Expression : public Node {
 public:
 	Type type;
-	std::unique_ptr<Expression> optimizeCP() = 0;
+	virtual std::unique_ptr<Expression> optimizeCP() = 0;
 };
 
 class TernaryExpression : public Expression {
