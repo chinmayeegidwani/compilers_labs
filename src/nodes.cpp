@@ -281,19 +281,22 @@ Type While::checkType(std::map<std::string, Type> & scope) {
 
 Type TernaryExpression::checkType(std::map<std::string, Type> & scope) {
 	Type res = oExpression -> checkType(scope);
+	std::cout << "Checking the type of the ternary predicate " << res << std::endl;
 	if(res != LOGICAL) {
 		printf("[output] type_bool: %i %i \n", this->location.begin.line, this->location.begin.column);
 		return ERROR;
 	}
 	Type res1 = tExpression1 -> checkType(scope);
+	std::cout << "Type of first expression " << res1 << std::endl;
 	Type res2 = tExpression2 -> checkType(scope);
-
+	std::cout << "Type of second expression " << res2 << std::endl;
 	if(res1 != res2) {
 		printf("[output] type_mismatch: %i %i \n", this->location.begin.line, this->location.begin.column);
 		return ERROR;
 	}
 
 	type = res1;
+	std::cout << "Setting the type of the ternary expression " << type << std::endl;
 	return type;
 }
 
@@ -640,7 +643,7 @@ void Suite::printTree(){
 }
 
 void ExpressionStatement::printTree(){
-	printf("\n		{ expr stmt (%i, %i)", this->location.begin.line, this->location.begin.column);
+	printf("\n		expr stmt (%i, %i) { ", this->location.begin.line, this->location.begin.column);
 	expr->printTree();
 	printf("\n		}");
 	return;
@@ -764,19 +767,19 @@ void UnaryMinusExpression::printTree(){
 }
 
 void Int::printTree(){
-	printf("			int(%i, %i){ ",this->location.begin.line, this->location.begin.column);
+	printf("\n			int(%i, %i){ ",this->location.begin.line, this->location.begin.column);
 	printf("%i } \n", data);
 	return;
 }
 
 void Float::printTree(){
-	printf("			float(%i, %i){ ",this->location.begin.line, this->location.begin.column);
+	printf("\n			float(%i, %i){ ",this->location.begin.line, this->location.begin.column);
 	printf("%f } \n", data);
 	return;
 }
 
 void Bool::printTree(){
-	printf("			bool(%i, %i){ ",this->location.begin.line, this->location.begin.column);
+	printf("\n			bool(%i, %i){ ",this->location.begin.line, this->location.begin.column);
 	if(data){
 		printf("true");
 	} else{
@@ -795,8 +798,8 @@ void NameExpression::printTree(){
 
 void FunctionCall::printTree(){
 	const char* types[6] = {"error", "none", "void", "int", "float", "logical"};
-	printf("			func call(%i, %i){ ",this->location.begin.line, this->location.begin.column);
-	printf("func: %s return_type: %s \n", n.c_str(), types[type]);
+	printf("			func call(%i, %i){ \n",this->location.begin.line, this->location.begin.column);
+	printf("			func: %s return type: %s \n", n.c_str(), types[type]);
 	//args->printTree();
 
 	for(unsigned long int i=0; i<arg_types.size(); i++){
@@ -982,7 +985,8 @@ std::unique_ptr<Expression> BinaryExpression::optimizeCP() {
 	Int* intOpt1 = dynamic_cast<Int *>(expr1Opt.get());
 	Int* intOpt2 = dynamic_cast<Int *>(expr1Opt.get());
 
-	if(intOpt1 && intOpt2) {
+	if(intOpt1 != nullptr && intOpt2 != nullptr) {
+		std::cout << "Reducing two integers " << std::endl << std::cout;
 		switch(op) {
 			case PLUS: { std::unique_ptr<Int> res = std::make_unique<Int>(intOpt1 -> data + intOpt2 -> data); res -> location = this -> location; return res; break; }
 			case MINUS: { std::unique_ptr<Int> res = std::make_unique<Int>(intOpt1 -> data - intOpt2 -> data); res -> location = this -> location; return res; break; }
@@ -1147,6 +1151,7 @@ std::unique_ptr<Expression> Bool::optimizeCP() {
 }
 
 std::unique_ptr<Expression> NameExpression::optimizeCP(){
+	std::cout << "Optimizing name expression" << std::endl;
 	std::unique_ptr<NameExpression> res = std::make_unique<NameExpression>(name);
 	res -> location = this -> location;
 	return res;
