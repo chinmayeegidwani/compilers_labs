@@ -92,8 +92,7 @@ std::unique_ptr<Node> optimize(std::unique_ptr<Node> root) {
 }
 
 void print_ast(Node* root) {
-	// TODO: lab 3
-	(void) root;
+	root -> printTree();
 	return;
 }
 
