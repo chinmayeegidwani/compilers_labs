@@ -696,15 +696,23 @@ void Continue::printTree(){
 void If::printTree(){
 	printf("		if(%i, %i){\n",this->location.begin.line, this->location.begin.column);
 	expr->printTree();
+	b -> printTree();
 	printf("		}\n");
 	return;
 }
 
 void For::printTree(){
 	printf("		for(%i, %i){\n",this->location.begin.line, this->location.begin.column);
-	s1->printTree();
-	expr->printTree();
-	s2->printTree();
+	if(s1) {
+		s1->printTree();
+	}
+	if(expr) {
+		expr->printTree();
+	}
+	if(s2) {
+		s2->printTree();
+	}
+	b -> printTree();
 	printf("		}\n");
 	return;
 }
@@ -712,6 +720,7 @@ void For::printTree(){
 void While::printTree(){
 	printf("		while(%i, %i){\n",this->location.begin.line, this->location.begin.column);
 	expr->printTree();
+	b -> printTree();
 	printf("		}\n");
 	return;
 }
