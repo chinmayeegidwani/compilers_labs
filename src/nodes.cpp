@@ -1030,7 +1030,7 @@ std::unique_ptr<Expression> BinaryExpression::optimizeCP() {
 			default: std::cout << "Unrecognized binary operator: error" << std::endl;
 		}
 	}
-	std::unique_ptr<BinaryExpression> res = std::make_unique<BinaryExpression>(expr1Opt, exp2Opt, op);
+	std::unique_ptr<BinaryExpression> res = std::make_unique<BinaryExpression>(expr1Opt, expr2Opt, op);
 	res -> location = this -> location;
 	return res;
 }
@@ -1064,9 +1064,9 @@ std::unique_ptr<Expression> CastExpression::optimizeCP() {
 
 	if(boolOpt) {
 		switch (type) {
-			case { INT: std::unique_ptr<Int> res = std::make_unique<Int>((int) boolOpt -> data); res -> location = this -> location; return res; break; }
-			case { FLOAT: std::unique_ptr<Float> res = std::make_unique<Float>((float) boolOpt -> data); res -> location = this -> location; return res; break; }
-			case { LOGICAL: std::unique_ptr<Bool> res = std::make_unique<Bool>((bool) boolOpt -> data); res -> location = this -> location; return res; break; }
+			case INT: { std::unique_ptr<Int> res = std::make_unique<Int>((int) boolOpt -> data); res -> location = this -> location; return res; break; }
+			case FLOAT: { std::unique_ptr<Float> res = std::make_unique<Float>((float) boolOpt -> data); res -> location = this -> location; return res; break; }
+			case LOGICAL: { std::unique_ptr<Bool> res = std::make_unique<Bool>((bool) boolOpt -> data); res -> location = this -> location; return res; break; }
 			default: std::cout << "Unrecognized type: error" << std::endl; break;
 		}
 	}
@@ -1112,13 +1112,13 @@ std::unique_ptr<Expression> UnaryMinusExpression::optimizeCP() {
 			default: std::cout << "Unrecognized type: error" << std::endl; break;
 		}
 	}
-	std::unique_ptr<CastExpression> res = make_node<CastExpression>(optExpr);
+	std::unique_ptr<CastExpression> res = make_unique<CastExpression>(type, std::move(optExpr));
 	res -> location = this -> location;
 	return res;
 }
 
 std::unique_ptr<Expression> Int::optimizeCP() {
-	std::unique_ptr<Int> res = make_node<Int>(data);
+	std::unique_ptr<Int> res = make_unique<Int>(data);
 	res -> location = this -> location;
 	return res;
 }
@@ -1136,14 +1136,14 @@ std::unique_ptr<Expression> Bool::optimizeCP() {
 }
 
 std::unique_ptr<Expression> NameExpression::optimizeCP(){
-	std::unique_ptr<NameExpression> res = std::make_unique<Float>(name);
+	std::unique_ptr<NameExpression> res = std::make_unique<NameExpression>(name);
 	res -> location = this -> location;
 	return res;
 }
 
 std::unique_ptr<Expression> FunctionCall::optimizeCP(){
-	std::unique_ptr<FunctionCall> res = std::std::make_unique<FunctionCall>(n);
-	for(unsigned long int i=0; i<args.size(); i++){
+	std::unique_ptr<FunctionCall> res = std::make_unique<FunctionCall>(n);
+	for(unsigned long int i=0; i < args -> size(); i++){
 		res -> args -> push_back((*(this -> args))[i] -> optimizeCP());
 	}
 	res -> location = this -> location;
