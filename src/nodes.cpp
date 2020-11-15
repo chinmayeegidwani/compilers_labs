@@ -983,7 +983,7 @@ std::unique_ptr<Expression> BinaryExpression::optimizeCP() {
 	std::unique_ptr expr2Opt = expression2 -> optimizeCP();
 
 	Int* intOpt1 = dynamic_cast<Int *>(expr1Opt.get());
-	Int* intOpt2 = dynamic_cast<Int *>(expr1Opt.get());
+	Int* intOpt2 = dynamic_cast<Int *>(expr2Opt.get());
 
 	if(intOpt1 != nullptr && intOpt2 != nullptr) {
 		std::cout << "Reducing two integers " << std::endl;
