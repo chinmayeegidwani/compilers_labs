@@ -986,7 +986,7 @@ std::unique_ptr<Expression> BinaryExpression::optimizeCP() {
 	Int* intOpt2 = dynamic_cast<Int *>(expr1Opt.get());
 
 	if(intOpt1 != nullptr && intOpt2 != nullptr) {
-		std::cout << "Reducing two integers " << std::endl << std::cout;
+		std::cout << "Reducing two integers " << std::endl;
 		switch(op) {
 			case PLUS: { std::unique_ptr<Int> res = std::make_unique<Int>(intOpt1 -> data + intOpt2 -> data); res -> location = this -> location; return res; break; }
 			case MINUS: { std::unique_ptr<Int> res = std::make_unique<Int>(intOpt1 -> data - intOpt2 -> data); res -> location = this -> location; return res; break; }
