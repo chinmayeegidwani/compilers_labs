@@ -52,12 +52,6 @@ class NameExpression;
 class FunctionCall;
 class FunctionState;
 
-template <typename T, typename... Args> static std::unique_ptr<T> make_node(yy::parser::location_type const& loc, Args&&... args) {
-	std::unique_ptr<T> n = std::make_unique<T>(std::forward<Args>(args)...);
-	n->location = loc;
-	return n;
-}
-
 class Node {
 public:
 	yy::location location;
@@ -106,6 +100,8 @@ public:
 		list.push_back(std::move(func));
 	}
 	
+	FunctionList() {}
+
 	Type checkType(std::map<std::string, Type> & scope) override;
 	bool checkReturn() override;
 	bool checkFuncDuplicates() override;
@@ -333,9 +329,9 @@ public:
 
 class For: public CompoundStatement {
 public:
-	std::unique_ptr<Node> s1;
+	std::unique_ptr<Statement> s1;
 	std::unique_ptr<Expression> expr;
-	std::unique_ptr<Node> s2;
+	std::unique_ptr<Statement> s2;
 	std::unique_ptr<Block> b;
 
 	For(std::unique_ptr<Node> statement1, std::unique_ptr<Node> statement2, std::unique_ptr<Expression> expression, std::unique_ptr<Block> block) {
