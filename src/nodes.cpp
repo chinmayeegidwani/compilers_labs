@@ -819,7 +819,7 @@ std::unique_ptr<Node> Root::optimize() {
 std::unique_ptr<FunctionList> FunctionList::optimizeCP(){
 	std::vector<std::unique_ptr<Function>> optList;
 
-	for(int i = 0; i < list.size; i++){
+	for(int i = 0; i < list.size(); i++){
 		optList.push_back(list[i] -> optimizeCP());
 	}
 	std::unique_ptr<FunctionList> optFuncList = std::make_unique<FunctionList> ();
@@ -829,20 +829,18 @@ std::unique_ptr<FunctionList> FunctionList::optimizeCP(){
 }
 
 std::unique_ptr<Function> FunctionDeclaration::optimizeCP(){
-	Type optType;
 	std::string optName;
 	std::unique_ptr<ParameterList> optParamList;
 
-	optFuncDecl = std::make_unique<FunctionDeclaration>(type, name, std::move(paramList));
+	std::unique_ptr<FunctionDeclaration> optFuncDecl = std::make_unique<FunctionDeclaration>(type, name, std::move(paramList));
 	optFuncDecl -> location = this -> location;
 	return optFuncDecl;
 }
 
 std::unique_ptr<Function> FunctionDefinition::optimizeCP() {
-	std::unique_ptr<FunctionDeclaration> optFuncDecl = funcDecl -> optimizeCP();
 	std::unique_ptr<Block> optBlock = blockNode -> optimizeCP();
 	
-	std::unique_ptr<FunctionDefinition> optFuncDefn std::make_unique<FunctionDefinition>(std::move(optFuncDecl), std::move(optBlock));
+	std::unique_ptr<FunctionDefinition> optFuncDefn = std::make_unique<FunctionDefinition>(std::move(funcDecl), std::move(optBlock));
 	optFuncDefn -> location = this -> location;
 	return optFuncDefn;
 }
@@ -850,7 +848,7 @@ std::unique_ptr<Function> FunctionDefinition::optimizeCP() {
 std::unique_ptr<Block> Suite::optimizeCP(){
 	std::unique_ptr<Suite> optSuite = std::make_unique<Suite>();
 
-	for(int i = 0; i < suiteList.size(); i++){
+	for(long unsigned int i = 0; i < suiteList.size(); i++){
 		optSuite -> suiteList.push_back(this -> suiteList[i] -> optimizeCP());
 	}
 	optSuite -> location = this -> location;
@@ -882,7 +880,7 @@ std::unique_ptr<Statement> DeclarationAssign::optimizeCP(){
 std::unique_ptr<Statement> SimpleAssign::optimizeCP() {
 	std::unique_ptr<Expression> optExpression = expr -> optimizeCP();
 
-	std::unique_ptr<SimpleAssign> res = std::make_unique(n, std::move(optExpression));
+	std::unique_ptr<SimpleAssign> res = std::make_unique<SimpleAssign>(n, std::move(optExpression));
 	res -> location = this -> location;
 	return res;
 }
@@ -891,7 +889,7 @@ std::unique_ptr<Statement> AugmentedAssign::optimizeCP() {
 	std::unique_ptr<Expression> optExpression = expr -> optimizeCP();
 	std::unique_ptr<AugmentedAssign> res = std::make_unique<AugmentedAssign>(n, std::move(optExpression), op);
 	res -> location = this -> location;
-	return 
+	return res;
 }
 
 std::unique_ptr<Statement> Break::optimizeCP() {
@@ -953,7 +951,7 @@ std::unique_ptr<Statement> For::optimizeCP() {
 std::unique_ptr<Statement> While::optimizeCP() {
 	std::unique_ptr<Expression> optExpr = expr -> optimizeCP();
 	std::unique_ptr<Block> optBlock = b -> optimizeCP();
-	std::unique_ptr<While> res = make_node<While>(std::move(optExpr), std::move(optBlock));
+	std::unique_ptr<While> res = std::make_unique<While>(std::move(optExpr), std::move(optBlock));
 	return res;
 }
 
@@ -975,18 +973,18 @@ std::unique_ptr<Expression> BinaryExpression::optimizeCP() {
 
 	if(intOpt1 && intOpt2) {
 		switch(op) {
-			case PLUS: std::unique_ptr<Int> res = std::make_unique<Int>(intOpt1 -> data + intOpt2 -> data); res -> location = this -> location; return res;
-			case MINUS: std::unique_ptr<Int> res = std::make_unique<Int>(intOpt1 -> data - intOpt2 -> data); res -> location = this -> location; return res;
-			case MUL: std::unique_ptr<Int> res = std::make_unique<Int>(intOpt1 -> data * intOpt2 -> data); res -> location = this -> location; return res;
-			case DIV: std::unique_ptr<Int> res = std::make_unique<Int>(intOpt1 -> data / intOpt2 -> data); res -> location = this -> location; return res;
-			case AND: std::unique_ptr<Bool> res = std::make_unique<Bool>(intOpt1 -> data && intOpt2 -> data); res -> location = this -> location; return res;
-			case OR: std::unique_ptr<Bool> res = std::make_unique<Bool>(intOpt1 -> data || intOpt2 -> data); res -> location = this -> location; return res;
-			case EQ: std::unique_ptr<Bool> res = std::make_unique<Bool>(intOpt1 -> data == intOpt2 -> data); res -> location = this -> location; return res;
-			case NEQ: std::unique_ptr<Bool> res = std::make_unique<Bool>(intOpt1 -> data != intOpt2 -> data); res -> location = this -> location; return res;
-			case LT: std::unique_ptr<Bool> res = std::make_unique<Bool>(intOpt1 -> data < intOpt2 -> data); res -> location = this -> location; return res;
-			case LE: std::unique_ptr<Bool> res = std::make_unique<Bool>(intOpt1 -> data <= intOpt2 -> data); res -> location = this -> location; return res;
-			case GE: std::unique_ptr<Bool> res = std::make_unique<Bool>(intOpt1 -> data >= intOpt2 -> data); res -> location = this -> location; return res;
-			case GT: std::unique_ptr<Bool> res = std::make_unique<Bool>(intOpt1 -> data > intOpt2 -> data); res -> location = this -> location; return res;
+			case PLUS: { std::unique_ptr<Int> res = std::make_unique<Int>(intOpt1 -> data + intOpt2 -> data); res -> location = this -> location; return res; }
+			case MINUS: { std::unique_ptr<Int> res = std::make_unique<Int>(intOpt1 -> data - intOpt2 -> data); res -> location = this -> location; return res; }
+			case MUL: { std::unique_ptr<Int> res = std::make_unique<Int>(intOpt1 -> data * intOpt2 -> data); res -> location = this -> location; return res; break; }
+			case DIV: { std::unique_ptr<Int> res = std::make_unique<Int>(intOpt1 -> data / intOpt2 -> data); res -> location = this -> location; return res; }
+			case AND: { std::unique_ptr<Bool> res = std::make_unique<Bool>(intOpt1 -> data && intOpt2 -> data); res -> location = this -> location; return res; }
+			case OR: { std::unique_ptr<Bool> res = std::make_unique<Bool>(intOpt1 -> data || intOpt2 -> data); res -> location = this -> location; return res; }
+			case EQ:  { std::unique_ptr<Bool> res = std::make_unique<Bool>(intOpt1 -> data == intOpt2 -> data); res -> location = this -> location; return res; }
+			case NEQ: { std::unique_ptr<Bool> res = std::make_unique<Bool>(intOpt1 -> data != intOpt2 -> data); res -> location = this -> location; return res; }
+			case LT: { std::unique_ptr<Bool> res = std::make_unique<Bool>(intOpt1 -> data < intOpt2 -> data); res -> location = this -> location; return res; }
+			case LE: { std::unique_ptr<Bool> res = std::make_unique<Bool>(intOpt1 -> data <= intOpt2 -> data); res -> location = this -> location; return res; }
+			case GE: { std::unique_ptr<Bool> res = std::make_unique<Bool>(intOpt1 -> data >= intOpt2 -> data); res -> location = this -> location; return res; }
+			case GT: {std::unique_ptr<Bool> res = std::make_unique<Bool>(intOpt1 -> data > intOpt2 -> data); res -> location = this -> location; return res; }
 			default: std::cout << "Unrecognized binary operator: error" << std::endl;
 		}
 	}
@@ -996,18 +994,18 @@ std::unique_ptr<Expression> BinaryExpression::optimizeCP() {
 
 	if(floatOpt1 && floatOpt2) {
 		switch(op) {
-			case PLUS: std::unique_ptr<float> res = std::make_unique<float>(floatOpt1 -> data + floatOpt2 -> data); res -> location = this -> location; return res;
-			case MINUS: std::unique_ptr<float> res = std::make_unique<float>(floatOpt1 -> data - floatOpt2 -> data); res -> location = this -> location; return res;
-			case MUL: std::unique_ptr<float> res = std::make_unique<float>(floatOpt1 -> data * floatOpt2 -> data); res -> location = this -> location; return res;
-			case DIV: std::unique_ptr<float> res = std::make_unique<float>(floatOpt1 -> data / floatOpt2 -> data); res -> location = this -> location; return res;
-			case AND: std::unique_ptr<Bool> res = std::make_unique<Bool>(floatOpt1 -> data && floatOpt2 -> data); res -> location = this -> location; return res;
-			case OR: std::unique_ptr<Bool> res = std::make_unique<Bool>(floatOpt1 -> data || floatOpt2 -> data); res -> location = this -> location; return res;
-			case EQ: std::unique_ptr<Bool> res = std::make_unique<Bool>(floatOpt1 -> data == floatOpt2 -> data); res -> location = this -> location; return res;
-			case NEQ: std::unique_ptr<Bool> res = std::make_unique<Bool>(floatOpt1 -> data != floatOpt2 -> data); res -> location = this -> location; return res;
-			case LT: std::unique_ptr<Bool> res = std::make_unique<Bool>(floatOpt1 -> data < floatOpt2 -> data); res -> location = this -> location; return res;
-			case LE: std::unique_ptr<Bool> res = std::make_unique<Bool>(floatOpt1 -> data <= floatOpt2 -> data); res -> location = this -> location; return res;
-			case GE: std::unique_ptr<Bool> res = std::make_unique<Bool>(floatOpt1 -> data >= floatOpt2 -> data); res -> location = this -> location; return res;
-			case GT: std::unique_ptr<Bool> res = std::make_unique<Bool>(floatOpt1 -> data > floatOpt2 -> data); res -> location = this -> location; return res;
+			case PLUS: { std::unique_ptr<Float> res = std::make_unique<Float>(floatOpt1 -> data + floatOpt2 -> data); res -> location = this -> location; return res; }
+			case MINUS: { std::unique_ptr<Float> res = std::make_unique<Float>(floatOpt1 -> data - floatOpt2 -> data); res -> location = this -> location; return res; }
+			case MUL: { std::unique_ptr<Float> res = std::make_unique<Float>(floatOpt1 -> data * floatOpt2 -> data); res -> location = this -> location; return res; }
+			case DIV: { std::unique_ptr<Float> res = std::make_unique<Float>(floatOpt1 -> data / floatOpt2 -> data); res -> location = this -> location; return res; }
+			case AND: { std::unique_ptr<Bool> res = std::make_unique<Bool>(floatOpt1 -> data && floatOpt2 -> data); res -> location = this -> location; return res; }
+			case OR: { std::unique_ptr<Bool> res = std::make_unique<Bool>(floatOpt1 -> data || floatOpt2 -> data); res -> location = this -> location; return res; }
+			case EQ: { std::unique_ptr<Bool> res = std::make_unique<Bool>(floatOpt1 -> data == floatOpt2 -> data); res -> location = this -> location; return res; }
+			case NEQ: { std::unique_ptr<Bool> res = std::make_unique<Bool>(floatOpt1 -> data != floatOpt2 -> data); res -> location = this -> location; return res; }
+			case LT: { std::unique_ptr<Bool> res = std::make_unique<Bool>(floatOpt1 -> data < floatOpt2 -> data); res -> location = this -> location; return res; }
+			case LE: { std::unique_ptr<Bool> res = std::make_unique<Bool>(floatOpt1 -> data <= floatOpt2 -> data); res -> location = this -> location; return res;}
+			case GE: { std::unique_ptr<Bool> res = std::make_unique<Bool>(floatOpt1 -> data >= floatOpt2 -> data); res -> location = this -> location; return res; }
+			case GT: { std::unique_ptr<Bool> res = std::make_unique<Bool>(floatOpt1 -> data > floatOpt2 -> data); res -> location = this -> location; return res; }
 			default: std::cout << "Unrecognized binary operator: error" << std::endl;
 		}
 	}
@@ -1015,20 +1013,20 @@ std::unique_ptr<Expression> BinaryExpression::optimizeCP() {
 	Bool* boolOpt1 = dynamic_cast<Bool *>(expr1Opt.get());
 	Bool* boolOpt2 = dynamic_cast<Bool *>(expr2Opt.get());
 
-	if(BoolOpt1 && BoolOpt2) {
+	if(boolOpt1 && boolOpt2) {
 		switch(op) {
-			case PLUS: std::unique_ptr<Bool> res = std::make_unique<Bool>(BoolOpt1 -> data + BoolOpt2 -> data); res -> location = this -> location; return res;
-			case MINUS: std::unique_ptr<Bool> res = std::make_unique<Bool>(BoolOpt1 -> data - BoolOpt2 -> data); res -> location = this -> location; return res;
-			case MUL: std::unique_ptr<Bool> res = std::make_unique<Bool>(BoolOpt1 -> data * BoolOpt2 -> data); res -> location = this -> location; return res;
-			case DIV: std::unique_ptr<Bool> res = std::make_unique<Bool>(BoolOpt1 -> data / BoolOpt2 -> data); res -> location = this -> location; return res;
-			case AND: std::unique_ptr<Bool> res = std::make_unique<Bool>(BoolOpt1 -> data && BoolOpt2 -> data); res -> location = this -> location; return res;
-			case OR: std::unique_ptr<Bool> res = std::make_unique<Bool>(BoolOpt1 -> data || BoolOpt2 -> data); res -> location = this -> location; return res;
-			case EQ: std::unique_ptr<Bool> res = std::make_unique<Bool>(BoolOpt1 -> data == BoolOpt2 -> data); res -> location = this -> location; return res;
-			case NEQ: std::unique_ptr<Bool> res = std::make_unique<Bool>(BoolOpt1 -> data != BoolOpt2 -> data); res -> location = this -> location; return res;
-			case LT: std::unique_ptr<Bool> res = std::make_unique<Bool>(BoolOpt1 -> data < BoolOpt2 -> data); res -> location = this -> location; return res;
-			case LE: std::unique_ptr<Bool> res = std::make_unique<Bool>(BoolOpt1 -> data <= BoolOpt2 -> data); res -> location = this -> location; return res;
-			case GE: std::unique_ptr<Bool> res = std::make_unique<Bool>(BoolOpt1 -> data >= BoolOpt2 -> data); res -> location = this -> location; return res;
-			case GT: std::unique_ptr<Bool> res = std::make_unique<Bool>(BoolOpt1 -> data > BoolOpt2 -> data); res -> location = this -> location; return res;
+			case PLUS: { std::unique_ptr<Bool> res = std::make_unique<Bool>(BoolOpt1 -> data + BoolOpt2 -> data); res -> location = this -> location; return res; }
+			case MINUS: { std::unique_ptr<Bool> res = std::make_unique<Bool>(BoolOpt1 -> data - BoolOpt2 -> data); res -> location = this -> location; return res; }
+			case MUL: { std::unique_ptr<Bool> res = std::make_unique<Bool>(BoolOpt1 -> data * BoolOpt2 -> data); res -> location = this -> location; return res; }
+			case DIV: { std::unique_ptr<Bool> res = std::make_unique<Bool>(BoolOpt1 -> data / BoolOpt2 -> data); res -> location = this -> location; return res; }
+			case AND: { std::unique_ptr<Bool> res = std::make_unique<Bool>(BoolOpt1 -> data && BoolOpt2 -> data); res -> location = this -> location; return res; }
+			case OR: { std::unique_ptr<Bool> res = std::make_unique<Bool>(BoolOpt1 -> data || BoolOpt2 -> data); res -> location = this -> location; return res; }
+			case EQ: { std::unique_ptr<Bool> res = std::make_unique<Bool>(BoolOpt1 -> data == BoolOpt2 -> data); res -> location = this -> location; return res; }
+			case NEQ: { std::unique_ptr<Bool> res = std::make_unique<Bool>(BoolOpt1 -> data != BoolOpt2 -> data); res -> location = this -> location; return res; }
+			case LT: { std::unique_ptr<Bool> res = std::make_unique<Bool>(BoolOpt1 -> data < BoolOpt2 -> data); res -> location = this -> location; return res; }
+			case LE: { std::unique_ptr<Bool> res = std::make_unique<Bool>(BoolOpt1 -> data <= BoolOpt2 -> data); res -> location = this -> location; return res; }
+			case GE: { std::unique_ptr<Bool> res = std::make_unique<Bool>(BoolOpt1 -> data >= BoolOpt2 -> data); res -> location = this -> location; return res; }
+			case GT: { std::unique_ptr<Bool> res = std::make_unique<Bool>(BoolOpt1 -> data > BoolOpt2 -> data); res -> location = this -> location; return res; }
 			default: std::cout << "Unrecognized binary operator: error" << std::endl;
 		}
 	}
@@ -1044,9 +1042,9 @@ std::unique_ptr<Expression> CastExpression::optimizeCP() {
 
 	if(intOpt) {
 		switch (type) {
-			case INT: std::unique_ptr<Int> res = std::make_unique<Int>((int) intOpt -> data); res -> location = this -> location; return res;
-			case FLOAT: std::unique_ptr<Float> res = std::make_unique<Float>((float) intOpt -> data); res -> location = this -> location; return res;
-			case LOGICAL: std::unique_ptr<Booll> res = std::make_unique<Bool>((bool) intOpt -> data); res -> location = this -> location; return res;
+			case INT: { std::unique_ptr<Int> res = std::make_unique<Int>((int) intOpt -> data); res -> location = this -> location; return res; }
+			case FLOAT: { std::unique_ptr<Float> res = std::make_unique<Float>((float) intOpt -> data); res -> location = this -> location; return res; }
+			case LOGICAL: { std::unique_ptr<Booll> res = std::make_unique<Bool>((bool) intOpt -> data); res -> location = this -> location; return res; }
 			default: std::cout << "Unrecognized type: error" << std::endl; break;
 		}
 	}
@@ -1055,9 +1053,9 @@ std::unique_ptr<Expression> CastExpression::optimizeCP() {
 
 	if(floatOpt) {
 		switch (type) {
-			case INT: std::unique_ptr<Int> res = std::make_unique<Int>((int) floatOpt -> data); res -> location = this -> location; return res;
-			case FLOAT: std::unique_ptr<Float> res = std::make_unique<Float>((float) floatOpt -> data); res -> location = this -> location; return res;
-			case LOGICAL: std::unique_ptr<Booll> res = std::make_unique<Bool>((bool) floatOpt -> data); res -> location = this -> location; return res;
+			case INT: { std::unique_ptr<Int> res = std::make_unique<Int>((int) floatOpt -> data); res -> location = this -> location; return res; }
+			case FLOAT: { std::unique_ptr<Float> res = std::make_unique<Float>((float) floatOpt -> data); res -> location = this -> location; return res; }
+			case LOGICAL: { std::unique_ptr<Booll> res = std::make_unique<Bool>((bool) floatOpt -> data); res -> location = this -> location; return res; }
 			default: std::cout << "Unrecognized type: error" << std::endl; break;
 		}
 	}
@@ -1066,9 +1064,9 @@ std::unique_ptr<Expression> CastExpression::optimizeCP() {
 
 	if(boolOpt) {
 		switch (type) {
-			case INT: std::unique_ptr<Int> res = std::make_unique<Int>((int) boolOpt -> data); res -> location = this -> location; return res;
-			case FLOAT: std::unique_ptr<Float> res = std::make_unique<Float>((float) boolOpt -> data); res -> location = this -> location; return res;
-			case LOGICAL: std::unique_ptr<Booll> res = std::make_unique<Bool>((bool) boolOpt -> data); res -> location = this -> location; return res;
+			case { INT: std::unique_ptr<Int> res = std::make_unique<Int>((int) boolOpt -> data); res -> location = this -> location; return res; }
+			case { FLOAT: std::unique_ptr<Float> res = std::make_unique<Float>((float) boolOpt -> data); res -> location = this -> location; return res; }
+			case { LOGICAL: std::unique_ptr<Booll> res = std::make_unique<Bool>((bool) boolOpt -> data); res -> location = this -> location; return res; }
 			default: std::cout << "Unrecognized type: error" << std::endl; break;
 		}
 	}
@@ -1084,9 +1082,9 @@ std::unique_ptr<Expression> UnaryMinusExpression::optimizeCP() {
 
 	if(intOpt) {
 		switch (type) {
-			case INT: std::unique_ptr<Int> res = std::make_unique<Int>(- (intOpt -> data)); res -> location = this -> location; return res;
-			case FLOAT: std::unique_ptr<Float> res = std::make_unique<Float>(- (intOpt -> data)); res -> location = this -> location; return res;
-			case LOGICAL: std::unique_ptr<Bool> res = std::make_unique<Bool>(- (intOpt -> data)); res -> location = this -> location; return res;
+			case { INT: std::unique_ptr<Int> res = std::make_unique<Int>(- (intOpt -> data)); res -> location = this -> location; return res; }
+			case { FLOAT: std::unique_ptr<Float> res = std::make_unique<Float>(- (intOpt -> data)); res -> location = this -> location; return res; }
+			case { LOGICAL: std::unique_ptr<Bool> res = std::make_unique<Bool>(- (intOpt -> data)); res -> location = this -> location; return res; }
 			default: std::cout << "Unrecognized type: error" << std::endl; break;
 		}
 	}
@@ -1095,9 +1093,9 @@ std::unique_ptr<Expression> UnaryMinusExpression::optimizeCP() {
 
 	if(floatOpt) {
 		switch (type) {
-			case INT: std::unique_ptr<Int> res = std::make_unique<Int>(- (floatOpt -> data)); res -> location = this -> location; return res;
-			case FLOAT: std::unique_ptr<Float> res = std::make_unique<Float>(- (floatOpt -> data)); res -> location = this -> location; return res;
-			case LOGICAL: std::unique_ptr<Bool> res = std::make_unique<Bool>(- (floatOpt -> data)); res -> location = this -> location; return res;
+			case INT: { std::unique_ptr<Int> res = std::make_unique<Int>(- (floatOpt -> data)); res -> location = this -> location; return res; }
+			case FLOAT: { std::unique_ptr<Float> res = std::make_unique<Float>(- (floatOpt -> data)); res -> location = this -> location; return res; }
+			case LOGICAL: { std::unique_ptr<Bool> res = std::make_unique<Bool>(- (floatOpt -> data)); res -> location = this -> location; return res; }
 			default: std::cout << "Unrecognized type: error" << std::endl; break;
 		}
 	}
@@ -1106,9 +1104,9 @@ std::unique_ptr<Expression> UnaryMinusExpression::optimizeCP() {
 
 	if(boolOpt) {
 		switch (type) {
-			case INT: std::unique_ptr<Int> res = std::make_unique<Int>(- (boolOpt -> data)); res -> location = this -> location; return res;
-			case FLOAT:  std::unique_ptr<Float> res = std::make_unique<Float>(- (boolOpt -> data)); res -> location = this -> location; return res;
-			case LOGICAL:  std::unique_ptr<Bool> res = std::make_unique<Bool>(- (boolOpt -> data)); res -> location = this -> location; return res;
+			case INT: { std::unique_ptr<Int> res = std::make_unique<Int>(- (boolOpt -> data)); res -> location = this -> location; return res; }
+			case FLOAT:  { std::unique_ptr<Float> res = std::make_unique<Float>(- (boolOpt -> data)); res -> location = this -> location; return res; }
+			case LOGICAL:  { std::unique_ptr<Bool> res = std::make_unique<Bool>(- (boolOpt -> data)); res -> location = this -> location; return res; }
 			default: std::cout << "Unrecognized type: error" << std::endl; break;
 		}
 	}

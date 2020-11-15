@@ -166,6 +166,7 @@ public:
 };
 
 class Block: public Node {
+public:
 	virtual std::unique_ptr<Block> optimizeCP() = 0;
 };
 
@@ -185,6 +186,7 @@ class Suite: public Block{
 };
 
 class Statement : public Node {
+public:
 	virtual std::unique_ptr<Statement> optimizeCP() = 0;
 };
 
