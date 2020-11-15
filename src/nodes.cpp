@@ -1112,7 +1112,7 @@ std::unique_ptr<Expression> UnaryMinusExpression::optimizeCP() {
 			default: std::cout << "Unrecognized type: error" << std::endl; break;
 		}
 	}
-	std::unique_ptr<CastExpression> res = make_unique<CastExpression>(type, std::move(optExpr));
+	std::unique_ptr<CastExpression> res = std::make_unique<CastExpression>(type, std::move(optExpr));
 	res -> location = this -> location;
 	return res;
 }
