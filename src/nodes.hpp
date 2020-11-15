@@ -334,7 +334,7 @@ public:
 	std::unique_ptr<Statement> s2;
 	std::unique_ptr<Block> b;
 
-	For(std::unique_ptr<Node> statement1, std::unique_ptr<Node> statement2, std::unique_ptr<Expression> expression, std::unique_ptr<Block> block) {
+	For(std::unique_ptr<Statement> statement1, std::unique_ptr<Statement> statement2, std::unique_ptr<Expression> expression, std::unique_ptr<Block> block) {
 		s1 = std::move(statement1);
 		s2 = std::move(statement2);
 		expr = std::move(expression);
