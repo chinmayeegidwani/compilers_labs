@@ -1030,7 +1030,7 @@ std::unique_ptr<Expression> BinaryExpression::optimizeCP() {
 			default: std::cout << "Unrecognized binary operator: error" << std::endl;
 		}
 	}
-	std::unique_ptr<BinaryExpression> res = std::make_unique<BinaryExpression>(expr1Opt, expr2Opt, op);
+	std::unique_ptr<BinaryExpression> res = std::make_unique<BinaryExpression>(std::move(expr1Opt), std::move(expr2Opt), op);
 	res -> location = this -> location;
 	return res;
 }
@@ -1071,7 +1071,7 @@ std::unique_ptr<Expression> CastExpression::optimizeCP() {
 		}
 	}
 
-	std::unique_ptr res = std::make_unique<CastExpression>(std::move(optExpr), type);
+	std::unique_ptr res = std::make_unique<CastExpression>(type, std::move(optExpr));
 	res -> location = this -> location;
 	return res;
 }
