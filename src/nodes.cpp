@@ -324,7 +324,7 @@ Type BinaryExpression::checkType(std::map<std::string, Type> & scope) {
 
 
 Type CastExpression::checkType(std::map<std::string, Type> & scope) {
-	type = cExpression -> checkType(scope);
+	Type res = cExpression -> checkType(scope);
 	if(res == ERROR) {
 		return ERROR;
 	}
