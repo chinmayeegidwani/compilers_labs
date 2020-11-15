@@ -1118,7 +1118,7 @@ std::unique_ptr<Expression> UnaryMinusExpression::optimizeCP() {
 }
 
 std::unique_ptr<Expression> Int::optimizeCP() {
-	std::unique_ptr<Int> res = make_unique<Int>(data);
+	std::unique_ptr<Int> res = std::make_unique<Int>(data);
 	res -> location = this -> location;
 	return res;
 }
