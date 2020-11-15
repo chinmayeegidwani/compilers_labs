@@ -87,7 +87,7 @@ bool verify_ast(Node* root) {
 
 std::unique_ptr<Node> optimize(std::unique_ptr<Node> root) {
 	// TODO: lab 3; return a new tree
-	std::unique_ptr<Node> result = root.optimize();
+	std::unique_ptr<Node> result = root -> optimize();
 	return result;
 }
 
