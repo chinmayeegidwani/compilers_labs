@@ -52,6 +52,12 @@ class NameExpression;
 class FunctionCall;
 class FunctionState;
 
+template <typename T, typename... Args> static std::unique_ptr<T> make_node(yy::parser::location_type const& loc, Args&&... args) {
+	std::unique_ptr<T> n = std::make_unique<T>(std::forward<Args>(args)...);
+	n->location = loc;
+	return n;
+}
+
 class Node {
 public:
 	yy::location location;
