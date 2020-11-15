@@ -324,7 +324,7 @@ Type BinaryExpression::checkType(std::map<std::string, Type> & scope) {
 
 
 Type CastExpression::checkType(std::map<std::string, Type> & scope) {
-	Type res = cExpression -> checkType(scope);
+	type = cExpression -> checkType(scope);
 	if(res == ERROR) {
 		return ERROR;
 	}
@@ -332,23 +332,20 @@ Type CastExpression::checkType(std::map<std::string, Type> & scope) {
 }
 
 Type UnaryMinusExpression::checkType(std::map<std::string, Type> & scope) {
-	Type type = expr -> checkType(scope);
+	type = expr -> checkType(scope);
 	return type;
 	
 }
 
 Type Int::checkType(std::map<std::string, Type> & scope) {
-	type = INT;
 	return type;
 }
 
 Type Float::checkType(std::map<std::string, Type> & scope) {
-	type = FLOAT;
 	return type;
 }
 
 Type Bool::checkType(std::map<std::string, Type> & scope) {
-	type = LOGICAL;
 	return type;
 }
 
@@ -615,9 +612,9 @@ void FunctionDeclaration::printTree(){
 }
 
 void FunctionDefinition::printTree(){
-	printf("	func decl (%i, %i) {\n", this->location.begin.line, this->location.begin.column);
-	const char* types[6] = {"error", "none", "void", "int", "float", "logical"};
 	funcDecl->printTree();
+	printf("	func defn (%i, %i) {\n", this->location.begin.line, this->location.begin.column);
+	const char* types[6] = {"error", "none", "void", "int", "float", "logical"};
 	blockNode->printTree();
 	printf("		return type: %s\n", types[type]);
 	printf("	} \n");
@@ -650,7 +647,7 @@ void ExpressionStatement::printTree(){
 }
 
 void Declaration::printTree(){
-	printf("		decl (%i, %i)", this->location.begin.line, this->location.begin.column);
+	printf("		decl (%i, %i) \n", this->location.begin.line, this->location.begin.column);
 	const char* types[6] = {"error", "none", "void", "int", "float", "logical"};
 	printf("%s %s", types[type], name.c_str());
 	printf("		} \n");
@@ -658,7 +655,7 @@ void Declaration::printTree(){
 }
 
 void DeclarationAssign::printTree(){
-	printf("		decl assign (%i, %i)", this->location.begin.line, this->location.begin.column);
+	printf("		decl assign (%i, %i) \n", this->location.begin.line, this->location.begin.column);
 	decl->printTree();
 	expr->printTree();
 	printf("		} \n");
@@ -666,7 +663,7 @@ void DeclarationAssign::printTree(){
 }
 
 void SimpleAssign::printTree(){
-	printf("		simp assign(%i, %i)", this->location.begin.line, this->location.begin.column);
+	printf("		simp assign(%i, %i) \n", this->location.begin.line, this->location.begin.column);
 	printf(n.c_str());
 	expr->printTree();
 	printf("		} \n");
@@ -674,7 +671,7 @@ void SimpleAssign::printTree(){
 }
 
 void AugmentedAssign::printTree(){
-	printf("		aug assign(%i, %i)", this->location.begin.line, this->location.begin.column);
+	printf("		aug assign(%i, %i)\n", this->location.begin.line, this->location.begin.column);
 	printf("var name: %s\n", n.c_str());
 	const char* augops[4] = {"plus_assign", "minus_assign", "star_assign", "slash_assign"};
 	printf("op: %s\n", augops[op]);

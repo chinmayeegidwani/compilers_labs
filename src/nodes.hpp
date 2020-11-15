@@ -442,6 +442,7 @@ public:
 
 	Int(int arg) {
 		data = arg;
+		type = INT;
 	}
 
 	Type checkType(std::map<std::string, Type> & scope) override;
@@ -455,6 +456,7 @@ public:
 
 	Float(float arg) {
 		data = arg;
+		type = FLOAT;
 	}
 	
 	Type checkType(std::map<std::string, Type> & scope) override;
@@ -468,6 +470,7 @@ public:
 
 	Bool(bool arg) {
 		data = arg;
+		type = LOGICAL;
 	}
 
 	Type checkType(std::map<std::string, Type> & scope) override;
