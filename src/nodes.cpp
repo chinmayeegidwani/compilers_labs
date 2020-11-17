@@ -793,8 +793,8 @@ void FunctionCall::printTree(){
 	printf("\n			func call(%i, %i){ ",this->location.begin.line, this->location.begin.column);
 	printf("\n			func: %s ", n.c_str());
 
-	for(unsigned long int i=0; i<args->size(); i++){
-		printf("\n		args: ")
+	for(unsigned long int i=0; i < args->size(); i++){
+		printf("\n		args: ");
 		(*args)[i]->printTree();
 	}
 
