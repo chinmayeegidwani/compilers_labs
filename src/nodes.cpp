@@ -714,7 +714,7 @@ void For::printTree(){
 		s2->printTree();
 	}
 	b -> printTree();
-	printf("\		}");
+	printf("\n		}");
 	return;
 }
 
@@ -794,7 +794,7 @@ void FunctionCall::printTree(){
 	printf("			func call(%i, %i){ \n",this->location.begin.line, this->location.begin.column);
 	printf("			func: %s \n", n.c_str());
 
-	for(unsigned long int i=0; i<args.size(); i++){
+	for(unsigned long int i=0; i<args->size(); i++){
 		(*args)[i]->printTree();
 	}
 
