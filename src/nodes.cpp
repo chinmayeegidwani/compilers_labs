@@ -791,14 +791,14 @@ void NameExpression::printTree(){
 }
 
 void FunctionCall::printTree(){
-	printf("			func call(%i, %i){ \n",this->location.begin.line, this->location.begin.column);
-	printf("			func: %s \n", n.c_str());
+	printf("\n			func call(%i, %i){ ",this->location.begin.line, this->location.begin.column);
+	printf("\n			func: %s \n", n.c_str());
 
 	for(unsigned long int i=0; i<args->size(); i++){
 		(*args)[i]->printTree();
 	}
 
-	printf("			}\n");
+	printf("\n			}");
 	return;
 }
 
@@ -1142,7 +1142,6 @@ std::unique_ptr<Expression> Bool::optimizeCP() {
 }
 
 std::unique_ptr<Expression> NameExpression::optimizeCP(){
-	std::cout << "Optimizing name expression" << std::endl;
 	std::unique_ptr<NameExpression> res = std::make_unique<NameExpression>(name);
 	res -> location = this -> location;
 	return res;

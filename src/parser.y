@@ -175,7 +175,7 @@ statement
 	;
 
 single_statement
-	: declaration TOK_ASSIGN expression { printf("Making DeclarationAssign node \n"); $$ = make_node<DeclarationAssign>(@$, $1, $3); }
+	: declaration TOK_ASSIGN expression { $$ = make_node<DeclarationAssign>(@$, $1, $3); }
 	| name TOK_ASSIGN expression { $$ = make_node<SimpleAssign>(@$, $1, $3); }
 	| name augmented_assign expression { $$ = make_node<AugmentedAssign>(@$, $1, $3, $2); }
 	| TOK_BREAK { $$ = make_node<Break>(@$); }
@@ -288,7 +288,7 @@ function_call
 	;
 
 comma_expression
-	: %empty {printf("Applying comma expression rule\n"); $$ = std::make_unique<std::vector<std::unique_ptr<Expression>>>(); }
+	: %empty { $$ = std::make_unique<std::vector<std::unique_ptr<Expression>>>(); }
 	| comma_expression expression TOK_COMMA { $$ = $1; $$->push_back($2); }
 	;
 

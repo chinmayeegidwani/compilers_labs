@@ -42,7 +42,6 @@ int main(int argc, char** argv) {
 			printf("[output] semantic analysis failed.\n");
 			return 1;
 		}
-		print_ast(root.get());
 		root = optimize(std::move(root));
 		print_ast(root.get());
 		return 0;

@@ -490,7 +490,6 @@ public:
 	std::vector<Type> arg_types;
 
 	FunctionCall(std::string arg) {
-		printf("Function Call constructor \n");
 		args = std::make_unique<std::vector<std::unique_ptr<Expression>>>();
 		n = arg;
 	}
