@@ -585,6 +585,7 @@ bool FunctionCall::checkTypeArg(std::map<std::string, std::vector<Type>> & funcS
 
 	for(unsigned long int i = 0; i < arg_types.size(); i++) {
 		if(arg_types[i] != (funcSig[n])[i]) {
+			printf("[Output] type_arg: %i %i \n", this->location.begin.line, this->location.begin.column);
 			return false;
 		}
 	}
@@ -618,9 +619,7 @@ void FunctionDeclaration::printTree(){
 void FunctionDefinition::printTree(){
 	funcDecl->printTree();
 	printf("\n	func defn (%i, %i) {", this->location.begin.line, this->location.begin.column);
-	const char* types[6] = {"error", "none", "void", "int", "float", "logical"};
 	blockNode->printTree();
-	printf("\n		return type: %s", types[type]);
 	printf("\n	} ");
 	return;
 }
@@ -792,9 +791,10 @@ void NameExpression::printTree(){
 
 void FunctionCall::printTree(){
 	printf("\n			func call(%i, %i){ ",this->location.begin.line, this->location.begin.column);
-	printf("\n			func: %s \n", n.c_str());
+	printf("\n			func: %s ", n.c_str());
 
 	for(unsigned long int i=0; i<args->size(); i++){
+		printf("\n		args: ")
 		(*args)[i]->printTree();
 	}
 
@@ -977,7 +977,6 @@ std::unique_ptr<Expression> BinaryExpression::optimizeCP() {
 	Int* intOpt2 = dynamic_cast<Int *>(expr2Opt.get());
 
 	if(intOpt1 != nullptr && intOpt2 != nullptr) {
-		std::cout << "Reducing two integers " << std::endl;
 		switch(op) {
 			case PLUS: { std::unique_ptr<Int> res = std::make_unique<Int>(intOpt1 -> data + intOpt2 -> data); res -> location = this -> location; return res; break; }
 			case MINUS: { std::unique_ptr<Int> res = std::make_unique<Int>(intOpt1 -> data - intOpt2 -> data); res -> location = this -> location; return res; break; }
