@@ -284,7 +284,7 @@ factor
 
 function_call
 	: name TOK_LPAREN TOK_RPAREN { $$ = make_node<FunctionCall>(@$, $1); }
-	| name TOK_LPAREN comma_expression expression TOK_RPAREN { printf("Applying one argument constructor rule \n"); $$ = make_node<FunctionCall>(@$, $1); $$ -> args = $3; $$ -> args -> push_back($4); }
+	| name TOK_LPAREN comma_expression expression TOK_RPAREN { $$ = make_node<FunctionCall>(@$, $1); $$ -> args = $3; $$ -> args -> push_back($4); }
 	;
 
 comma_expression

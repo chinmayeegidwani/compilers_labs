@@ -4,6 +4,11 @@ Node::~Node() = default;
 
 Type Root::checkType(std::map<std::string, Type> & scope) {
 	Type result = (*funcList).checkType(scope);
+
+	if(result == ERROR) {
+		return ERROR;
+	}
+
 	if(scope.find("main") == scope.end()) {
 		printf("[output] main_function %i %i", this->location.begin.line, this->location.begin.column);
 		return ERROR;
@@ -93,10 +98,7 @@ Type Suite::checkType(std::map<std::string, Type> & scope) {
 		if(statement_res != NONE) {
 			res = statement_res;
 		}
-		std::cout << "Printing the variables in the scope" << std::endl;
-		for(auto j = scope.begin(); j != scope.end(); j++) {
-			std::cout << j -> first << std::endl;
-		}
+		
 	}
 
 	return res;
@@ -116,23 +118,12 @@ Type Declaration::checkType(std::map<std::string, Type> & scope) {
 		return ERROR;
 	}
 
-	std::cout << "Printing the variables in the scope, inside Declaration, for name" << name << std::endl;
-	for(auto j = scope.begin(); j != scope.end(); j++) {
-		std::cout << j -> first << std::endl;
-	}
-
 	scope[name] = type;
-
-	std::cout << "Printing the variables in the scope, inside Declaration" << std::endl;
-	for(auto j = scope.begin(); j != scope.end(); j++) {
-		std::cout << j -> first << std::endl;
-	}
 
 	return NONE;
 }
 
 Type DeclarationAssign::checkType(std::map<std::string, Type> & scope) {
-	std::cout << "Call to checkType DeclarationAssign" << std::endl;
 	Type temp = decl -> checkType(scope);
 	if(temp == ERROR) {
 		return ERROR;
@@ -148,7 +139,6 @@ Type DeclarationAssign::checkType(std::map<std::string, Type> & scope) {
 Type SimpleAssign::checkType(std::map<std::string, Type> & scope) {
 
 	if(scope.find(n) == scope.end()) {
-		printf("Culprit 1 \n");
 		printf("[output] type_decl: %i %i \n", this->location.begin.line, this->location.begin.column);
 		return ERROR;
 	}
@@ -166,7 +156,6 @@ Type SimpleAssign::checkType(std::map<std::string, Type> & scope) {
 Type AugmentedAssign::checkType(std::map<std::string, Type> & scope) {
 
 	if(scope.find(n) == scope.end()) {
-		printf("Culprit 2 \n");
 		printf("[output] type_decl: %i %i \n", this->location.begin.line, this->location.begin.column);
 		return ERROR;
 	}
@@ -281,28 +270,39 @@ Type While::checkType(std::map<std::string, Type> & scope) {
 
 Type TernaryExpression::checkType(std::map<std::string, Type> & scope) {
 	Type res = oExpression -> checkType(scope);
-	std::cout << "Checking the type of the ternary predicate " << res << std::endl;
+	if(res == ERROR) {
+		return ERROR;
+	}
 	if(res != LOGICAL) {
 		printf("[output] type_bool: %i %i \n", this->location.begin.line, this->location.begin.column);
 		return ERROR;
 	}
 	Type res1 = tExpression1 -> checkType(scope);
-	std::cout << "Type of first expression " << res1 << std::endl;
+	if(res1 == ERROR) {
+		return ERROR;
+	}
 	Type res2 = tExpression2 -> checkType(scope);
-	std::cout << "Type of second expression " << res2 << std::endl;
+	if(res2 == ERROR) {
+		return ERROR;
+	}
 	if(res1 != res2) {
 		printf("[output] type_mismatch: %i %i \n", this->location.begin.line, this->location.begin.column);
 		return ERROR;
 	}
 
 	type = res1;
-	std::cout << "Setting the type of the ternary expression " << type << std::endl;
 	return type;
 }
 
 Type BinaryExpression::checkType(std::map<std::string, Type> & scope) {
 	Type res1 = expression1 -> checkType(scope);
+	if(res1 == ERROR) {
+		return ERROR;
+	}
 	Type res2 = expression2 -> checkType(scope);
+	if(res2 == ERROR) {
+		return ERROR;
+	}
 	if(res1 != res2) {
 		printf("[output] type_mismatch: %i %i", this->location.begin.line, this->location.begin.column);
 		return ERROR;
@@ -354,7 +354,6 @@ Type Bool::checkType(std::map<std::string, Type> & scope) {
 
 Type NameExpression::checkType(std::map<std::string, Type> & scope) {
 	if(scope.find(name) == scope.end()) {
-		printf("Culprit 3 \n");
 		printf("[output] type_decl: %i %i \n", this->location.begin.line, this->location.begin.column);
 		type = ERROR;
 		return type;
@@ -365,7 +364,6 @@ Type NameExpression::checkType(std::map<std::string, Type> & scope) {
 
 Type FunctionCall::checkType(std::map<std::string, Type> & scope) {
 	if(scope.find(n) == scope.end()) {
-		printf("Culprit 4 \n");
 		printf("[output] type_decl: %i %i \n", this->location.begin.line, this->location.begin.column);
 		type = ERROR;
 		return type;
@@ -394,6 +392,9 @@ bool FunctionList::checkReturn() {
 	bool result = true;
 	for(unsigned long int i = 0; i < list.size(); i++) {
 		result = result && list[i] -> checkReturn();
+		if(!result) {
+			return result;
+		}
 	}
 	return result;
 }
@@ -684,25 +685,25 @@ void AugmentedAssign::printTree(){
 }
 
 void Break::printTree(){
-	printf("			break(%i, %i)\n", this->location.begin.line, this->location.begin.column);
+	printf("\n			break(%i, %i)", this->location.begin.line, this->location.begin.column);
 	return;
 }
 
 void Continue::printTree(){
-	printf("			continue(%i, %i)\n",this->location.begin.line, this->location.begin.column);
+	printf("\n			continue(%i, %i)",this->location.begin.line, this->location.begin.column);
 	return;
 }
 
 void If::printTree(){
-	printf("		if(%i, %i){\n",this->location.begin.line, this->location.begin.column);
+	printf("\n		if(%i, %i){",this->location.begin.line, this->location.begin.column);
 	expr->printTree();
 	b -> printTree();
-	printf("		}\n");
+	printf("\n		}");
 	return;
 }
 
 void For::printTree(){
-	printf("		for(%i, %i){\n",this->location.begin.line, this->location.begin.column);
+	printf("\n		for(%i, %i){",this->location.begin.line, this->location.begin.column);
 	if(s1) {
 		s1->printTree();
 	}
@@ -713,68 +714,62 @@ void For::printTree(){
 		s2->printTree();
 	}
 	b -> printTree();
-	printf("		}\n");
+	printf("\		}");
 	return;
 }
 
 void While::printTree(){
-	printf("		while(%i, %i){\n",this->location.begin.line, this->location.begin.column);
+	printf("\n		while(%i, %i){",this->location.begin.line, this->location.begin.column);
 	expr->printTree();
 	b -> printTree();
-	printf("		}\n");
+	printf("\n		}");
 	return;
 }
 
 void TernaryExpression::printTree(){
-	printf("		ternary expr(%i, %i){ ",this->location.begin.line, this->location.begin.column);
-	const char* types[6] = {"error", "none", "void", "int", "float", "logical"};
-	printf("type: %s \n", types[type]);
+	printf("\n		ternary expr(%i, %i){ ",this->location.begin.line, this->location.begin.column);
 	oExpression->printTree();
 	tExpression1->printTree();
 	tExpression2->printTree();
-	printf("		}\n");
+	printf("\n		}");
 	return;
 }
 
 void BinaryExpression::printTree(){
-	printf("		binary expr(%i, %i){ ",this->location.begin.line, this->location.begin.column);
-	const char* types[6] = {"error", "none", "void", "int", "float", "logical"};
-	printf("type: %s \n", types[type]);
+	printf("\n		binary expr(%i, %i){ ",this->location.begin.line, this->location.begin.column);
+	const char* binops[12] = {"plus", "minus", "mul", "div", "and", "or", "eq", "neq", "lt", "gt", "le", "ge"};
+	printf("\n		op: %s ", binops[op]);
 	expression1->printTree();
 	expression2->printTree();
-	const char* binops[12] = {"plus", "minus", "mul", "div", "and", "or", "eq", "neq", "lt", "gt", "le", "ge"};
-	printf("op: %s\n", binops[op]);
-	printf("		}\n");
+	printf("\n		}");
 	return;
 }
 
 void CastExpression::printTree(){
-	printf("		cast expr(%i, %i){ ",this->location.begin.line, this->location.begin.column);
+	printf("\n		cast expr(%i, %i){ ",this->location.begin.line, this->location.begin.column);
 	const char* types[6] = {"error", "none", "void", "int", "float", "logical"};
-	printf("type: %s \n", types[type]);
+	printf("\n		cast type: %s \n", types[type]);
 	cExpression->printTree();
-	printf("		}\n");
+	printf("\n		}");
 	return;
 }
 
 void UnaryMinusExpression::printTree(){
-	printf("		unary minus expr(%i, %i){\n",this->location.begin.line, this->location.begin.column);
-	const char* types[6] = {"error", "none", "void", "int", "float", "logical"};
-	printf("type: %s \n", types[type]);
+	printf("\n		unary minus expr(%i, %i){",this->location.begin.line, this->location.begin.column);
 	expr->printTree();
-	printf("		}\n");
+	printf("\n		}\n");
 	return;
 }
 
 void Int::printTree(){
 	printf("\n			int(%i, %i){ ",this->location.begin.line, this->location.begin.column);
-	printf("%i } \n", data);
+	printf("%i } ", data);
 	return;
 }
 
 void Float::printTree(){
 	printf("\n			float(%i, %i){ ",this->location.begin.line, this->location.begin.column);
-	printf("%f } \n", data);
+	printf("%f } ", data);
 	return;
 }
 
@@ -785,25 +780,21 @@ void Bool::printTree(){
 	} else{
 		printf("false");
 	}
-	printf(" }\n");
+	printf(" }");
 	return;
 }
 
 void NameExpression::printTree(){
-	printf("			name expr(%i, %i){ ",this->location.begin.line, this->location.begin.column);
-	const char* types[6] = {"error", "none", "void", "int", "float", "logical"};
-	printf(" %s %s } \n", types[type], name.c_str());
+	printf("\n			name expr(%i, %i){ ",this->location.begin.line, this->location.begin.column);
+	printf(" %s }", name.c_str());
 	return;
 }
 
 void FunctionCall::printTree(){
-	const char* types[6] = {"error", "none", "void", "int", "float", "logical"};
 	printf("			func call(%i, %i){ \n",this->location.begin.line, this->location.begin.column);
-	printf("			func: %s return type: %s \n", n.c_str(), types[type]);
-	//args->printTree();
+	printf("			func: %s \n", n.c_str());
 
-	for(unsigned long int i=0; i<arg_types.size(); i++){
-		printf("			type %lu: %s\n", i, types[arg_types[i]]);
+	for(unsigned long int i=0; i<args.size(); i++){
 		(*args)[i]->printTree();
 	}
 
@@ -812,14 +803,14 @@ void FunctionCall::printTree(){
 }
 
 void ReturnVoid::printTree(){
-	printf("	return void(%i, %i) \n ",this->location.begin.line, this->location.begin.column);
+	printf("\n	return void(%i, %i)",this->location.begin.line, this->location.begin.column);
 	return;
 }
 
 void ReturnNotVoid::printTree(){
-	printf("	return expr(%i, %i){\n",this->location.begin.line, this->location.begin.column);
+	printf("\n	return expr(%i, %i){",this->location.begin.line, this->location.begin.column);
 	expr->printTree();
-	printf("	}\n");
+	printf("\n	}");
 	return;
 }
 
