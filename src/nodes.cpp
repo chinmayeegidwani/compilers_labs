@@ -579,7 +579,7 @@ bool UnaryMinusExpression::checkTypeArg(std::map<std::string, std::vector<Type>>
 
 bool FunctionCall::checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) {
 	if(funcSig[n].size() != arg_types.size()) {
-		printf("[Output] type_arg: %i %i \n", this->location.begin.line, this->location.begin.column);
+		printf("[output] type_arg: %i %i \n", this->location.begin.line, this->location.begin.column);
 		return false;	
 	}
 
