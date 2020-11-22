@@ -7,6 +7,8 @@
 #include "llvm/IR/Module.h"
 #include <string>
 #include <memory>
+#include <deque>
+#include <map>
 #include <optional>
 #include <functional>
 #include <system_error>

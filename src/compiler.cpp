@@ -111,7 +111,7 @@ CompilationUnit::CompilationUnit() : context(std::make_unique<llvm::LLVMContext>
 }
 
 bool CompilationUnit::process(Node* root) {
-	root -> codegen(this);
+	root -> codegenP(this);
 	llvm::verifyModule(*this->module, &llvm::errs());
 	return true;
 }

@@ -4,9 +4,7 @@
 #include "location.hh"
 #include <memory>
 #include <vector>
-#include <map>
 #include <set>
-#include <deque>
 #include <iostream>
 #include "compiler.hpp"
 
