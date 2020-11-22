@@ -90,7 +90,7 @@ class Function: public Node {
 public:
 	virtual bool setDefDecl(std::set<std::string> & declared, std::set<std::string> & defined) = 0;
 	virtual std::unique_ptr<Function> optimizeCP() = 0;
-	llvm::Function * FunctionDeclaration::codegen(CompilationUnit * unit) = 0;
+	virtual llvm::Function * codegen(CompilationUnit * unit) = 0;
 };
 
 class FunctionList: public Node {
