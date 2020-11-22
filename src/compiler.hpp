@@ -33,11 +33,14 @@ public:
 
 private:
 	using MainFunction = std::function<int(int, char**)>;
-
+	std::map<std::string, AllocInst *> namedValues;
+	std::deque<llvm::BasicBlock *> headers;
+	std::deque<llvm::BasicBlock *> afters;
 	std::unique_ptr<llvm::LLVMContext> context;
 	llvm::IRBuilder<> builder;
 	std::unique_ptr<llvm::Module> module;
 	MainFunction main;
+	friend class Node;
 };
 
 #endif // ECE467_COMPILER_HPP_INCLUDED

@@ -98,10 +98,7 @@ std::unique_ptr<CompilationUnit> compile(Node* root) {
 	if (!unit->process(root)) {
 		return nullptr;
 	}
-	std::optional<llvm::Error> e = unit->build();
-	if (e) {
-		return nullptr;
-	}
+
 	return unit;
 }
 
@@ -114,8 +111,7 @@ CompilationUnit::CompilationUnit() : context(std::make_unique<llvm::LLVMContext>
 }
 
 bool CompilationUnit::process(Node* root) {
-	(void) root;
-	// TODO: lab 4
+	root -> codegen(this);
 	llvm::verifyModule(*this->module, &llvm::errs());
 	return true;
 }
@@ -123,7 +119,7 @@ bool CompilationUnit::process(Node* root) {
 std::error_code CompilationUnit::dump(std::string path) {
 	std::error_code ec;
 	llvm::raw_fd_ostream out(path, ec, llvm::sys::fs::OpenFlags::F_None);
-	llvm::WriteBitcodeToFile(*this->module, out);
+	this->module->print(out, nullptr);
 	return ec;
 }
 

@@ -23,11 +23,9 @@ class Function;
 class FunctionList;
 class FunctionDeclaration;
 class FunctionDefinition;
-class ParameterList;
 class Block;
 class Suite;
 class Statement;
-class ExpressionStatement;
 class Declaration;
 class DeclarationAssign;
 class SimpleAssign;
@@ -65,6 +63,7 @@ public:
 	virtual bool checkFuncDuplicates() { return false; }
 	virtual bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) {return true; }
 	virtual std::unique_ptr<Node> optimize() {return nullptr; }
+	virtual void codegen(CompilationUnit * unit) {return void; }
 
 };
 
@@ -82,12 +81,14 @@ public:
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 	void printTree() override;
 	std::unique_ptr<Node> optimize() override;
+	void codegen(CompilationUnit * unit) override;
 };
 
 class Function: public Node {
 public:
 	virtual bool setDefDecl(std::set<std::string> & declared, std::set<std::string> & defined) = 0;
 	virtual std::unique_ptr<Function> optimizeCP() = 0;
+	llvm::Function * FunctionDeclaration::codegen(CompilationUnit * unit) = 0;
 };
 
 class FunctionList: public Node {
@@ -107,18 +108,19 @@ public:
 
 	void printTree() override;
 	std::unique_ptr<FunctionList> optimizeCP();
+	void codegen(CompilationUnit * unit) override;
 };
 
 class FunctionDeclaration: public Function {
 public:
 	Type type;
 	std::string name;
-	std::unique_ptr<ParameterList> paramList;
+	std::vector<std::unique_ptr<Declaration>> paramList;
 
-	FunctionDeclaration(Type t, std::string n, std::unique_ptr<ParameterList> param_list){
+	FunctionDeclaration(Type t, std::string n, std::vector<std::unique_ptr<Declaration>> list){
 		type = t;
 		name = n;
-		paramList = std::move(param_list);
+		paramList = std::move(list);
 	}
 
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
@@ -127,6 +129,7 @@ public:
 	bool setDefDecl(std::set<std::string> & declared, std::set<std::string> & defined) override;
 	std::unique_ptr<Function> optimizeCP() override;
 	void printTree() override;
+	llvm::Function * FunctionDeclaration::codegen(CompilationUnit * unit) override;
 };
 
 class FunctionDefinition: public Function{
@@ -147,59 +150,40 @@ public:
 	bool setDefDecl(std::set<std::string> & declared, std::set<std::string> & defined) override;
 	std::unique_ptr<Function> optimizeCP() override;
 	void printTree() override;
-};
-
-class ParameterList: public Node {
-public:
-		std::unique_ptr<std::vector<std::unique_ptr<Declaration>>> paramList;
-
-		ParameterList() {
-			paramList = std::make_unique<std::vector<std::unique_ptr<Declaration>>>();
-		}
-		Type checkType(std::map<std::string, Type> & scope) override;
-		std::unique_ptr<ParameterList> optimizeCP();
-		void printTree() override;
+	llvm::Function * FunctionDeclaration::codegen(CompilationUnit * unit) override;
 };
 
 class Block: public Node {
 public:
 	virtual std::unique_ptr<Block> optimizeCP() = 0;
+	virtual bool codegen(CompilationUnit * unit) = 0;
 };
 
-class Suite: public Block{
+class Suite: public Block
+
+{
 	public:
 		std::vector<std::unique_ptr<Statement>> suiteList;
 
-		Suite(){
-		}
+		Suite(){}
+
 		bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 		Type checkType(std::map<std::string, Type> & scope) override;
 		bool checkReturn() override;
 		std::unique_ptr<Block> optimizeCP() override;
 		bool isBool(){ return false; };
 		void printTree() override;
+		bool codegen(CompilationUnit * unit) override;
+		bool Suite::codegen(CompilationUnit * unit) override;
 };
 
 class Statement : public Node {
 public:
 	virtual std::unique_ptr<Statement> optimizeCP() = 0;
+	virtual bool codegen(CompilationUnit * unit) = 0;
 };
 
 class SingleStatement : public Statement {};
-
-class ExpressionStatement: public SingleStatement {
-public:
-	std::unique_ptr<Expression> expr;
-	
-	ExpressionStatement(std::unique_ptr<Expression> expression) {
-		expr = std::move(expression);
-	}
-
-	Type checkType(std::map<std::string, Type> & scope) override;
-	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
-	void printTree() override;
-	std::unique_ptr<Statement> optimizeCP() override;
-};
 
 class Declaration: public SingleStatement {
 public:
@@ -214,6 +198,7 @@ public:
 	Type checkType(std::map<std::string, Type> & scope) override;
 	void printTree() override;
 	std::unique_ptr<Statement> optimizeCP() override;
+	bool codegen(CompilationUnit * unit) override;
 };
 
 class DeclarationAssign: public SingleStatement {
@@ -230,6 +215,7 @@ public:
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 	void printTree() override;
 	std::unique_ptr<Statement> optimizeCP() override;
+	bool codegen(CompilationUnit * unit) override;
 };
 
 class SimpleAssign: public SingleStatement {
@@ -246,6 +232,7 @@ public:
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 	void printTree() override;
 	std::unique_ptr<Statement> optimizeCP() override;
+	bool codegen(CompilationUnit * unit) override;
 };
 
 class AugmentedAssign: public SingleStatement {
@@ -264,6 +251,7 @@ public:
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 	void printTree() override;
 	std::unique_ptr<Statement> optimizeCP() override;
+	bool codegen(CompilationUnit * unit) override;
 };
 
 class Break: public SingleStatement {
@@ -271,6 +259,7 @@ class Break: public SingleStatement {
 	Type checkType(std::map<std::string, Type> & scope) override;	
 	void printTree() override;
 	std::unique_ptr<Statement> optimizeCP() override;
+	bool codegen(CompilationUnit * unit) override;
 };
 
 class Continue: public SingleStatement {
@@ -278,6 +267,7 @@ class Continue: public SingleStatement {
 	Type checkType(std::map<std::string, Type> & scope) override;
 	void printTree() override;
 	std::unique_ptr<Statement> optimizeCP() override;
+	bool codegen(CompilationUnit * unit) override;
 
 };
 
@@ -287,6 +277,7 @@ class ReturnVoid: public SingleStatement {
 	bool isReturn() override;
 	void printTree() override;
 	std::unique_ptr<Statement> optimizeCP() override;
+	bool codegen(CompilationUnit * unit) override;
 };
 
 class ReturnNotVoid: public SingleStatement {
@@ -302,6 +293,7 @@ public:
 	bool isReturn() override;
 	void printTree() override;
 	std::unique_ptr<Statement> optimizeCP() override;
+	bool codegen(CompilationUnit * unit) override;
 };
 
 class CompoundStatement: public Statement {};
@@ -320,6 +312,7 @@ public:
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 	void printTree() override;
 	std::unique_ptr<Statement> optimizeCP() override;
+	bool codegen(CompilationUnit * unit) override;
 };
 
 class For: public CompoundStatement {
@@ -340,6 +333,7 @@ public:
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 	void printTree() override;
 	std::unique_ptr<Statement> optimizeCP() override;
+	bool codegen(CompilationUnit * unit) override;
 };
 
 class While: public CompoundStatement {
@@ -356,12 +350,14 @@ public:
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 	void printTree() override;
 	std::unique_ptr<Statement> optimizeCP() override;
+	bool codegen(CompilationUnit * unit) override;
 };
 
 class Expression : public Node {
 public:
 	Type type;
 	virtual std::unique_ptr<Expression> optimizeCP() = 0;
+	virtual llvm::Value * codegen(CompilationUnit * unit) = 0;
 };
 
 class TernaryExpression : public Expression {
@@ -380,6 +376,7 @@ public:
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 	void printTree() override;
 	std::unique_ptr<Expression> optimizeCP() override;
+	llvm::Value * codegen(CompilationUnit * unit) override;
 };
 
 class BinaryExpression : public Expression {
@@ -398,6 +395,7 @@ public:
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 	void printTree() override;
 	std::unique_ptr<Expression> optimizeCP() override;
+	llvm::Value * codegen(CompilationUnit * unit) override;
 };
 
 class CastExpression : public Expression {
@@ -413,6 +411,7 @@ public:
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 	void printTree() override;
 	std::unique_ptr<Expression> optimizeCP() override;
+	llvm::Value * codegen(CompilationUnit * unit) override;
 };
 
 class UnaryMinusExpression : public Expression {
@@ -427,6 +426,7 @@ public:
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 	void printTree() override;
 	std::unique_ptr<Expression> optimizeCP() override;
+	llvm::Value * codegen(CompilationUnit * unit) override;
 };
 
 class Int : public Expression {
@@ -441,6 +441,7 @@ public:
 	Type checkType(std::map<std::string, Type> & scope) override;
 	void printTree() override;
 	std::unique_ptr<Expression> optimizeCP() override;
+	llvm::Value * codegen(CompilationUnit * unit) override;
 };
 
 class Float : public Expression {
@@ -455,6 +456,7 @@ public:
 	Type checkType(std::map<std::string, Type> & scope) override;
 	void printTree() override;
 	std::unique_ptr<Expression> optimizeCP() override;
+	llvm::Value * codegen(CompilationUnit * unit) override;
 };
 
 class Bool : public Expression {
@@ -469,6 +471,7 @@ public:
 	Type checkType(std::map<std::string, Type> & scope) override;
 	void printTree() override;
 	std::unique_ptr<Expression> optimizeCP() override;
+	llvm::Value * codegen(CompilationUnit * unit) override;
 };
 
 class NameExpression : public Expression {
@@ -481,16 +484,16 @@ public:
 	Type checkType(std::map<std::string, Type> & scope) override;
 	void printTree() override;
 	std::unique_ptr<Expression> optimizeCP() override;
+	llvm::Value * codegen(CompilationUnit * unit) override;
 };
 
 class FunctionCall : public Expression {
 public:
 	std::string n;
-	std::unique_ptr<std::vector<std::unique_ptr<Expression>>>  args;
+	std::vector<std::unique_ptr<Expression>> args;
 	std::vector<Type> arg_types;
 
 	FunctionCall(std::string arg) {
-		args = std::make_unique<std::vector<std::unique_ptr<Expression>>>();
 		n = arg;
 	}
 
@@ -498,6 +501,8 @@ public:
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 	void printTree() override;
 	std::unique_ptr<Expression> optimizeCP() override;
+	llvm::Value * codegen(CompilationUnit * unit) override;
 };
+
 
 #endif // ECE467_NODE_HPP_INCLUDED
