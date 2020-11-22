@@ -65,7 +65,7 @@ public:
 	virtual bool checkFuncDuplicates() { return false; }
 	virtual bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) {return true; }
 	virtual std::unique_ptr<Node> optimize() {return nullptr; }
-	virtual void codegen(CompilationUnit * unit) {return; }
+	virtual void codegenP(CompilationUnit * unit) {return; }
 
 };
 
@@ -83,14 +83,14 @@ public:
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 	void printTree() override;
 	std::unique_ptr<Node> optimize() override;
-	void codegen(CompilationUnit * unit) override;
+	void codegenP(CompilationUnit * unit) override;
 };
 
 class Function: public Node {
 public:
 	virtual bool setDefDecl(std::set<std::string> & declared, std::set<std::string> & defined) = 0;
 	virtual std::unique_ptr<Function> optimizeCP() = 0;
-	virtual llvm::Function * codegen(CompilationUnit * unit) = 0;
+	virtual llvm::Function * codegenP(CompilationUnit * unit) = 0;
 };
 
 class FunctionList: public Node {

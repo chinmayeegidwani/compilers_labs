@@ -1120,12 +1120,12 @@ std::unique_ptr<Expression> FunctionCall::optimizeCP(){
 	return res;
 }
 
-void Root::codegen(CompilationUnit * unit) {
+void Root::codegenP(CompilationUnit * unit) {
 	FuncList -> codegen(unit);
 	return;
 }
 
-void FunctionList::codegen(CompilationUnit * unit) {
+void FunctionList::codegenP(CompilationUnit * unit) {
 
 	for(unsigned long int i = 0; i < list.size(); i++) {
 		list[i] -> codegen(unit);
