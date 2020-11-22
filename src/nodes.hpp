@@ -176,7 +176,6 @@ class Suite: public Block
 		bool isBool(){ return false; };
 		void printTree() override;
 		bool codegen(CompilationUnit * unit) override;
-		bool codegen(CompilationUnit * unit) override;
 };
 
 class Statement : public Node {
