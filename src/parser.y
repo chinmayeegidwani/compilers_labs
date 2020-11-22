@@ -87,7 +87,7 @@ template <typename T, typename... Args> static std::unique_ptr<T> make_node(yy::
 %type <Type> type
 %type <std::string> name
 %type <std::vector<std::unique_ptr<Declaration>>> parameter_list
-%type <std::unique_ptr<std::vector<std::unique_ptr<Declaration>>>> declaration_extra
+%type <std::vector<std::unique_ptr<Declaration>>> declaration_extra
 %type <std::unique_ptr<Block>> block
 %type <std::unique_ptr<Declaration>> declaration
 %type <std::unique_ptr<Suite>> suite
