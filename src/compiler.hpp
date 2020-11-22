@@ -33,7 +33,7 @@ public:
 
 private:
 	using MainFunction = std::function<int(int, char**)>;
-	std::map<std::string, AllocInst *> namedValues;
+	std::map<std::string, llvm::AllocaInst *> namedValues;
 	std::deque<llvm::BasicBlock *> headers;
 	std::deque<llvm::BasicBlock *> afters;
 	std::unique_ptr<llvm::LLVMContext> context;

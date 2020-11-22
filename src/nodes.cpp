@@ -1122,7 +1122,7 @@ std::unique_ptr<Expression> FunctionCall::optimizeCP(){
 
 void Root::codegen(CompilationUnit * unit) {
 	FuncList -> codegen(unit);
-	return void;
+	return;
 }
 
 void FunctionList::codegen(CompilationUnit * unit) {
@@ -1131,7 +1131,7 @@ void FunctionList::codegen(CompilationUnit * unit) {
 		list[i] -> codegen(unit);
 	}
 
-	return void;
+	return;
 }
 
 llvm::Type * typeHelper(Type type) {
