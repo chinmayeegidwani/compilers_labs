@@ -131,7 +131,7 @@ public:
 	bool setDefDecl(std::set<std::string> & declared, std::set<std::string> & defined) override;
 	std::unique_ptr<Function> optimizeCP() override;
 	void printTree() override;
-	llvm::Function * FunctionDeclaration::codegen(CompilationUnit * unit) override;
+	llvm::Function * codegen(CompilationUnit * unit) override;
 };
 
 class FunctionDefinition: public Function{
@@ -152,7 +152,7 @@ public:
 	bool setDefDecl(std::set<std::string> & declared, std::set<std::string> & defined) override;
 	std::unique_ptr<Function> optimizeCP() override;
 	void printTree() override;
-	llvm::Function * FunctionDeclaration::codegen(CompilationUnit * unit) override;
+	llvm::Function * codegen(CompilationUnit * unit) override;
 };
 
 class Block: public Node {
@@ -176,7 +176,7 @@ class Suite: public Block
 		bool isBool(){ return false; };
 		void printTree() override;
 		bool codegen(CompilationUnit * unit) override;
-		bool Suite::codegen(CompilationUnit * unit) override;
+		bool codegen(CompilationUnit * unit) override;
 };
 
 class Statement : public Node {
