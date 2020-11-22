@@ -7,6 +7,7 @@
 #include <map>
 #include <set>
 #include <iostream>
+#include "compiler.hpp"
 
 enum Type {ERROR, NONE, VOID, INT, FLOAT, LOGICAL};
 typedef enum Type Type;
