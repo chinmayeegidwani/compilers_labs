@@ -1114,7 +1114,7 @@ std::unique_ptr<Expression> FunctionCall::optimizeCP(){
 }
 
 void Root::codegenP(CompilationUnit * unit) {
-	funcList -> codegen(unit);
+	funcList -> codegenP(unit);
 	return;
 }
 
@@ -1130,9 +1130,9 @@ void FunctionList::codegenP(CompilationUnit * unit) {
 llvm::Type * typeHelper(CompilationUnit * unit, Type type) {
 
 	switch(type) {
-		case INT: { return llvm::Type::getInt32Ty(unit -> context); break; }
-		case FLOAT: { return llvm::Type::getFloatTy(unit -> context); break; }
-		case LOGICAL: { return llvm::Type::getInt1Ty(unit -> context); break; }
+		case INT: { return llvm::Type::getInt32Ty(*(unit -> context)); break; }
+		case FLOAT: { return llvm::Type::getFloatTy(*(unit -> context)); break; }
+		case LOGICAL: { return llvm::Type::getInt1Ty(*(unit -> context)); break; }
 		default: std::cout << "Unknown type provided to typeHelper" << std::endl;
 	}
 
@@ -1151,7 +1151,7 @@ llvm::Function * FunctionDeclaration::codegen(CompilationUnit * unit) {
 	}
 
 	llvm::FunctionType * signature = llvm::FunctionType::get(typeHelper(unit, type), params, false);
-	llvm::Function * F = llvm::Function::Create(signature, llvm::Function::ExternalLinkage, name, unit -> module);
+	llvm::Function * F = llvm::Function::Create(signature, llvm::Function::ExternalLinkage, name, *(unit -> module));
 
 	unsigned long int i = 0;
 	for(llvm::Argument& a : F -> args()) {
@@ -1194,14 +1194,14 @@ bool Suite::codegen(CompilationUnit * unit) {
 }
 
 bool Declaration::codegen(CompilationUnit * unit) {
-	llvm::AllocaInst * alloca = unit -> builder.CreateAlloca(typeHelper(type), nullptr, name);
+	llvm::AllocaInst * alloca = unit -> builder.CreateAlloca(typeHelper(unit, type), nullptr, name);
 	unit -> namedValues[name] = alloca;
 	return false;
 }
 
 bool DeclarationAssign::codegen(CompilationUnit * unit) {
 	llvm::Value * toAssign = expr -> codegen(unit);
-	llvm::Value * isNull = decl -> codegen(unit);
+	decl -> codegen(unit);
 	unit -> builder.CreateStore(toAssign, unit -> namedValues[decl -> name]);
 
 	return false;
@@ -1209,7 +1209,7 @@ bool DeclarationAssign::codegen(CompilationUnit * unit) {
 
 bool SimpleAssign::codegen(CompilationUnit * unit) {
 	llvm::Value * toAssign = expr -> codegen(unit);
-	unit -> builder.CreateStore(toAssign, namedValues[n]);
+	unit -> builder.CreateStore(toAssign, unit -> namedValues[n]);
 
 	return false;
 }
@@ -1221,19 +1221,19 @@ bool AugmentedAssign::codegen(CompilationUnit * unit) {
 	switch(op) {
 		case PLUS_ASSIGN: {
 			result = unit -> builder.CreateAdd(currVal, toAssign, name);
-			unit -> builder.CreateStore(result, nameValues[name]);
+			unit -> builder.CreateStore(result, unit -> nameValues[n]);
 		}
 		case MINUS_ASSIGN: {
 			result = unit -> builder.CreateSub(currVal, toAssign, name);
-			unit -> builder.CreateStore(result, nameValues[name]);
+			unit -> builder.CreateStore(result, unit -> nameValues[n]);
 		}
 		case STAR_ASSIGN: {
 			result = unit -> builder.CreateMul(currVal, toAssign, name);
-			unit -> builder.CreateStore(result, nameValues[name]);
+			unit -> builder.CreateStore(result, unit -> nameValues[n]);
 		}
 		case SLASH_ASSIGN: {
 			result = unit -> builder.CreateSDiv(currVal, toAssign, name);
-			unit -> builder.CreateStore(result, nameValues[name]);
+			unit -> builder.CreateStore(result, unit -> nameValues[n]);
 		}
 		default: {
 			std::cout << "Unknown augmented assign operator" << std::endl;
@@ -1266,7 +1266,7 @@ bool ReturnNotVoid::codegen(CompilationUnit * unit) {
 
 bool If::codegen(CompilationUnit * unit) {
 	llvm::Value * cond = expr -> codegen(unit);
-	llvm::Function * F = unit -> builder.getInsertBlock() -> getParent();
+	llvm::Function * F = unit -> builder.GetInsertBlock() -> getParent();
 
 	llvm::BasicBlock* thenBB = llvm::BasicBlock::Create(*(unit -> context), "then", F);
 	llvm::BasicBlock* mergeBB = llvm::BasicBlock::Create(*(unit -> context), "merge");
@@ -1287,7 +1287,7 @@ bool If::codegen(CompilationUnit * unit) {
 }
 
 bool For::codegen(CompilationUnit * unit) {
-	llvm::Function* F = unit -> builder.getInsertBlock() -> getParent();
+	llvm::Function* F = unit -> builder.GetInsertBlock() -> getParent();
 
 	if(s1) {
 		s1 -> codegen(unit);
@@ -1295,7 +1295,7 @@ bool For::codegen(CompilationUnit * unit) {
 
 
 	llvm::BasicBlock* loopCondition =  llvm::BasicBlock::Create(*(unit -> context), "loop condition", F);
-	llvm::BasicBlock* loopInduction = llvm::BasicBlock::Create(*(unit->context), "loop induction")
+	llvm::BasicBlock* loopInduction = llvm::BasicBlock::Create(*(unit->context), "loop induction");
 	llvm::BasicBlock* loopBody = llvm::BasicBlock::Create(*(unit -> context), "loop body");
 	llvm::BasicBlock* mergeBB = llvm::BasicBlock::Create(*(unit -> context), "loop body");
 
@@ -1307,7 +1307,7 @@ bool For::codegen(CompilationUnit * unit) {
 	unit -> builder.SetInsertPoint(loopCondition);
 
 	if(expr) {
-		Value * cond = expr -> codegen();
+		llvm::Value * cond = expr -> codegen(unit);
 		unit -> builder.CreateCondBr(cond, loopBody, mergeBB);
 	}
 
@@ -1351,7 +1351,7 @@ bool While::codegen(CompilationUnit * unit) {
 
 	//for the break and continue statements
 	unit -> headers.push_front(loopCondition);
-	unit -> afters.push_front(mergBB);
+	unit -> afters.push_front(mergeBB);
 
 	unit -> builder.CreateBr(loopCondition);
 	unit -> builder.SetInsertPoint(loopCondition);
@@ -1377,7 +1377,7 @@ bool While::codegen(CompilationUnit * unit) {
 
 llvm::Value * TernaryExpression::codegen(CompilationUnit * unit) {
 	llvm::Value * predicate = oExpression -> codegen(unit);
-	Function * F = unit -> builder.GetInsertBlock() -> getParent();
+	llvm::Function * F = unit -> builder.GetInsertBlock() -> getParent();
 
 	llvm::BasicBlock * true_expression = llvm::BasicBlock::Create(*(unit -> context), "true expression", F);
 	llvm::BasicBlock * false_expression = llvm::BasicBlock::Create(*(unit -> context), "false expression");
@@ -1462,7 +1462,7 @@ llvm::Value * BinaryExpression::codegen(CompilationUnit * unit) {
 		}
 		case EQ:
 		{
-			res = unit -> builder.CreateICmpNEQ(lhs, rhs, "Equal ints");
+			res = unit -> builder.CreateICmpEQ(lhs, rhs, "Equal ints");
 			break;
 		}
 		default: std::cout << "Input binary operator not recognized" << std::endl; break;
@@ -1470,42 +1470,42 @@ llvm::Value * BinaryExpression::codegen(CompilationUnit * unit) {
 	return res;
 }
 
-Value * CastExpression:: codegen(CompilationUnit* unit) {
+llvm::Value * CastExpression:: codegen(CompilationUnit* unit) {
 	return cExpression -> codegen(unit);
 }
 
-Value * NameExpression::codegen(CompilationUnit* unit) {
-	Value * V = nameValues[name];
+llvm::Value * NameExpression::codegen(CompilationUnit* unit) {
+	llvm::Value * V = nameValues[name];
 	return builder.CreateLoad(V, name.c_str())
 }
 
-Value * UnaryMinus::codegen(CompilationUnit* unit) {
-	Value * R = expr -> codegen(unit);
+llvm::Value * UnaryMinus::codegen(CompilationUnit* unit) {
+	llvm::Value * R = expr -> codegen(unit);
 	if(expr -> type == INT || expr -> type = BOOL) {
 		return builder.CreateNeg(R, "unary minus int/bool");
 
 	return builder.CreateFNeg(R, "floating point unary minus");
 }
 
-Value * Float::codegen(CompilationUnit* unit) {
+llvm::Value * Float::codegen(CompilationUnit* unit) {
 	return llvm::ConstantFP::get(llvm::Type::getFloatTy(context), data);
 }
 
-Value * Int::codegen(CompilationUnit* unit) {
+llvm::Value * Int::codegen(CompilationUnit* unit) {
 	return llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), data, true);
 }
 
-Value * Bool::codegen(CompilationUnit* unit) {
+llvm::Value * Bool::codegen(CompilationUnit* unit) {
 	return llvm::ConstantInt::get(llvm::Type::getInt1Ty(context), (int) data, false);
 }
 
-Value * FunctionCall::codegen(CompilationUnit* unit) {
+llvm::Value * FunctionCall::codegen(CompilationUnit* unit) {
 	llvm::Function * callee = unit -> module -> getFunction(n);
 	if(!callee) {
 		std::cout << "Cannot find called function in this module" << std::endl;
 	}
 
-	std::vector<Value *> llvm_args;
+	std::vector<llvm::Value *> llvm_args;
 	for(unsigned long int i = 0; i < args.size(); i++) {
 		llvm_args.push_back(args[i] -> codegen(unit));
 	}
