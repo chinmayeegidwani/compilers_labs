@@ -65,7 +65,7 @@ public:
 	virtual bool checkFuncDuplicates() { return false; }
 	virtual bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) {return true; }
 	virtual std::unique_ptr<Node> optimize() {return nullptr; }
-	virtual void codegen(CompilationUnit * unit) {return void; }
+	virtual void codegen(CompilationUnit * unit) {return; }
 
 };
 
