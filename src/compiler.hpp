@@ -33,7 +33,6 @@ public:
 	std::error_code dump(std::string);
 	int run(int, char**);
 
-private:
 	using MainFunction = std::function<int(int, char**)>;
 	std::map<std::string, llvm::AllocaInst *> namedValues;
 	std::deque<llvm::BasicBlock *> headers;
