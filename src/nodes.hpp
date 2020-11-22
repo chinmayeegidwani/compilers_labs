@@ -86,13 +86,6 @@ public:
 	void codegenP(CompilationUnit * unit) override;
 };
 
-class Function: public Node {
-public:
-	virtual bool setDefDecl(std::set<std::string> & declared, std::set<std::string> & defined) = 0;
-	virtual std::unique_ptr<Function> optimizeCP() = 0;
-	virtual llvm::Function * codegenP(CompilationUnit * unit) = 0;
-};
-
 class FunctionList: public Node {
 public:
 	std::vector<std::unique_ptr<Function>> list;
@@ -110,7 +103,14 @@ public:
 
 	void printTree() override;
 	std::unique_ptr<FunctionList> optimizeCP();
-	void codegen(CompilationUnit * unit) override;
+	void codegenP(CompilationUnit * unit) override;
+};
+
+class Function: public Node {
+public:
+	virtual bool setDefDecl(std::set<std::string> & declared, std::set<std::string> & defined) = 0;
+	virtual std::unique_ptr<Function> optimizeCP() = 0;
+	virtual llvm::Function * codegen(CompilationUnit * unit) = 0;
 };
 
 class FunctionDeclaration: public Function {
