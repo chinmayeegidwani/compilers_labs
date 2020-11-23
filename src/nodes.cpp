@@ -1216,7 +1216,7 @@ bool SimpleAssign::codegen(CompilationUnit * unit) {
 
 bool AugmentedAssign::codegen(CompilationUnit * unit) {
 	llvm::Value * toAssign = expr -> codegen(unit);
-	llvm::LoadInst * currVal = unit -> builder.CreateLoad(unit -> namedValues[n] -> getType(), nameValues[n], n);
+	llvm::LoadInst * currVal = unit -> builder.CreateLoad(unit -> namedValues[n] -> getType(), unit -> nameValues[n], n);
 	llvm::Value * result;
 	switch(op) {
 		case PLUS_ASSIGN: {
@@ -1326,7 +1326,7 @@ bool For::codegen(CompilationUnit * unit) {
 	bool isTerminated = b -> codegen(unit);
 
 	if(!isTerminated) {
-		unit -> builder.createBr(loopInduction);
+		unit -> builder.CreateBr(loopInduction);
 	}
 
 	F -> getBasicBlockList().push_back(loopInduction);
@@ -1486,22 +1486,22 @@ llvm::Value * NameExpression::codegen(CompilationUnit* unit) {
 
 llvm::Value * UnaryMinusExpression::codegen(CompilationUnit* unit) {
 	llvm::Value * R = expr -> codegen(unit);
-	if(expr -> type == INT || expr -> type = LOGICAL) {
+	if(expr -> type == INT || expr -> type == LOGICAL) {
 		return unit -> builder.CreateNeg(R, "unary minus int/bool");
 	}
 	return unit -> builder.CreateFNeg(R, "floating point unary minus");
 }
 
 llvm::Value * Float::codegen(CompilationUnit* unit) {
-	return llvm::ConstantFP::get(llvm::Type::getFloatTy(context), data);
+	return llvm::ConstantFP::get(llvm::Type::getFloatTy(*(unit -> context)), data);
 }
 
 llvm::Value * Int::codegen(CompilationUnit* unit) {
-	return llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), data, true);
+	return llvm::ConstantInt::get(llvm::Type::getInt32Ty(*(unit -> context)), data, true);
 }
 
 llvm::Value * Bool::codegen(CompilationUnit* unit) {
-	return llvm::ConstantInt::get(llvm::Type::getInt1Ty(context), (int) data, false);
+	return llvm::ConstantInt::get(llvm::Type::getInt1Ty(*(unit -> context)), (int) data, false);
 }
 
 llvm::Value * FunctionCall::codegen(CompilationUnit* unit) {
@@ -1515,6 +1515,6 @@ llvm::Value * FunctionCall::codegen(CompilationUnit* unit) {
 		llvm_args.push_back(args[i] -> codegen(unit));
 	}
 
-	return builder.CreateCall(callee, llvm_args, "func call");
+	return unit -> builder.CreateCall(callee, llvm_args, "func call");
 
 }
