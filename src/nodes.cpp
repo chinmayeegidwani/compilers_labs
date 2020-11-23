@@ -1216,27 +1216,32 @@ bool SimpleAssign::codegen(CompilationUnit * unit) {
 
 bool AugmentedAssign::codegen(CompilationUnit * unit) {
 	llvm::Value * toAssign = expr -> codegen(unit);
-	llvm::LoadInst * currVal = unit -> builder.CreateLoad(unit -> namedValues[n].getType(), nameValues[n], n);
+	llvm::LoadInst * currVal = unit -> builder.CreateLoad(unit -> namedValues[n] -> getType(), nameValues[n], n);
 	llvm::Value * result;
 	switch(op) {
 		case PLUS_ASSIGN: {
-			result = unit -> builder.CreateAdd(currVal, toAssign, name);
+			result = unit -> builder.CreateAdd(currVal, toAssign, n);
 			unit -> builder.CreateStore(result, unit -> namedValues[n]);
+			break;
 		}
 		case MINUS_ASSIGN: {
-			result = unit -> builder.CreateSub(currVal, toAssign, name);
+			result = unit -> builder.CreateSub(currVal, toAssign, n);
 			unit -> builder.CreateStore(result, unit -> namedValues[n]);
+			break;
 		}
 		case STAR_ASSIGN: {
-			result = unit -> builder.CreateMul(currVal, toAssign, name);
+			result = unit -> builder.CreateMul(currVal, toAssign, n);
 			unit -> builder.CreateStore(result, unit -> namedValues[n]);
+			break;
 		}
 		case SLASH_ASSIGN: {
-			result = unit -> builder.CreateSDiv(currVal, toAssign, name);
+			result = unit -> builder.CreateSDiv(currVal, toAssign, n);
 			unit -> builder.CreateStore(result, unit -> namedValues[n]);
+			break;
 		}
 		default: {
 			std::cout << "Unknown augmented assign operator" << std::endl;
+			break;
 		}
 	}
 
@@ -1321,14 +1326,14 @@ bool For::codegen(CompilationUnit * unit) {
 	bool isTerminated = b -> codegen(unit);
 
 	if(!isTerminated) {
-		builder.createBr(loopInduction);
+		unit -> builder.createBr(loopInduction);
 	}
 
 	F -> getBasicBlockList().push_back(loopInduction);
 	unit -> builder.SetInsertPoint(loopInduction);
 
 	if(s2) {
-		s2 -> codegen();
+		s2 -> codegen(unit);
 	}
 
 	unit -> builder.CreateBr(loopCondition);
@@ -1479,11 +1484,11 @@ llvm::Value * NameExpression::codegen(CompilationUnit* unit) {
 	return unit -> builder.CreateLoad(V, name.c_str());
 }
 
-llvm::Value * UnaryMinus::codegen(CompilationUnit* unit) {
+llvm::Value * UnaryMinusExpression::codegen(CompilationUnit* unit) {
 	llvm::Value * R = expr -> codegen(unit);
 	if(expr -> type == INT || expr -> type = LOGICAL) {
-		return builder.CreateNeg(R, "unary minus int/bool");
-
+		return unit -> builder.CreateNeg(R, "unary minus int/bool");
+	}
 	return unit -> builder.CreateFNeg(R, "floating point unary minus");
 }
 
