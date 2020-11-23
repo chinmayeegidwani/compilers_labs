@@ -36,7 +36,7 @@ Type FunctionDeclaration::checkType(std::map<std::string, Type> & scope) {
 	scope[name] = type;
 	std::map<std::string, Type> newScope = scope;
 	for(unsigned long int i = 0; i < paramList.size(); i++) {
-		paramList[i]->checkType(scope);
+		paramList[i]->checkType(newScope);
 	}
 
 	return type;
