@@ -1216,7 +1216,7 @@ bool SimpleAssign::codegen(CompilationUnit * unit) {
 
 bool AugmentedAssign::codegen(CompilationUnit * unit) {
 	llvm::Value * toAssign = expr -> codegen(unit);
-	llvm::LoadInst * currVal = unit -> builder.CreateLoad(unit -> namedValues[n] -> getType(), unit -> nameValues[n], n);
+	llvm::LoadInst * currVal = unit -> builder.CreateLoad(unit -> namedValues[n] -> getType(), unit -> namedValues[n], n);
 	llvm::Value * result;
 	switch(op) {
 		case PLUS_ASSIGN: {
