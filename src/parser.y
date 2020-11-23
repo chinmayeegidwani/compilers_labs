@@ -152,7 +152,7 @@ parameter_list
 	;
 
 declaration_extra
-	: %empty {$$ = std::vector<std::unique_ptr<Declaration>>();; }
+	: %empty {$$ = std::vector<std::unique_ptr<Declaration>>(); }
 	| declaration_extra declaration TOK_COMMA {$$ = $1; $$.push_back($2); }
 	;
 
@@ -282,13 +282,13 @@ factor
 	;
 
 function_call
-	: name TOK_LPAREN TOK_RPAREN { $$ = make_node<FunctionCall>(@$, $1); }
-	| name TOK_LPAREN comma_expression expression TOK_RPAREN { $$ = make_node<FunctionCall>(@$, $1); $$ -> args = $3; $$ -> args.push_back($4); }
+	: name TOK_LPAREN TOK_RPAREN { printf("Making the function call"); $$ = make_node<FunctionCall>(@$, $1); }
+	| name TOK_LPAREN comma_expression expression TOK_RPAREN { printf("Func call with arguments \n"); $$ = make_node<FunctionCall>(@$, $1); printf("Setting the args \n"); $$ -> args = $3; printf("Adding the last arg \n"); $$ -> args.push_back($4); }
 	;
 
 comma_expression
-	: %empty { $$ = std::vector<std::unique_ptr<Expression>>(); }
-	| comma_expression expression TOK_COMMA { $$ = $1; $$.push_back($2); }
+	: %empty { printf("Making the empty vector \n"); $$ = std::vector<std::unique_ptr<Expression>>(); }
+	| comma_expression expression TOK_COMMA { printf("Moving the vector to the parent \n"); $$ = $1; printf("Adding the next argument \n"); $$.push_back($2); }
 	;
 
 %%
