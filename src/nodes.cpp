@@ -1177,7 +1177,7 @@ llvm::Function * FunctionDefinition::codegen(CompilationUnit * unit) {
 
 	blockNode -> codegen(unit);
 
-	llvm::verifyFunction(*F);
+//	llvm::verifyFunction(*F);
 	return F;
 }
 
@@ -1216,24 +1216,24 @@ bool SimpleAssign::codegen(CompilationUnit * unit) {
 
 bool AugmentedAssign::codegen(CompilationUnit * unit) {
 	llvm::Value * toAssign = expr -> codegen(unit);
-	llvm::LoadInst * currVal = unit -> builder.CreateLoad(nameValues[name].getType(), nameValues[n], n);
+	llvm::LoadInst * currVal = unit -> builder.CreateLoad(unit -> namedValues[n].getType(), nameValues[n], n);
 	llvm::Value * result;
 	switch(op) {
 		case PLUS_ASSIGN: {
 			result = unit -> builder.CreateAdd(currVal, toAssign, name);
-			unit -> builder.CreateStore(result, unit -> nameValues[n]);
+			unit -> builder.CreateStore(result, unit -> namedValues[n]);
 		}
 		case MINUS_ASSIGN: {
 			result = unit -> builder.CreateSub(currVal, toAssign, name);
-			unit -> builder.CreateStore(result, unit -> nameValues[n]);
+			unit -> builder.CreateStore(result, unit -> namedValues[n]);
 		}
 		case STAR_ASSIGN: {
 			result = unit -> builder.CreateMul(currVal, toAssign, name);
-			unit -> builder.CreateStore(result, unit -> nameValues[n]);
+			unit -> builder.CreateStore(result, unit -> namedValues[n]);
 		}
 		case SLASH_ASSIGN: {
 			result = unit -> builder.CreateSDiv(currVal, toAssign, name);
-			unit -> builder.CreateStore(result, unit -> nameValues[n]);
+			unit -> builder.CreateStore(result, unit -> namedValues[n]);
 		}
 		default: {
 			std::cout << "Unknown augmented assign operator" << std::endl;
@@ -1315,10 +1315,10 @@ bool For::codegen(CompilationUnit * unit) {
 		unit -> builder.CreateBr(loopBody);
 	}
 
-	F -> getBasicBlockList().pushBack(loopBody);
+	F -> getBasicBlockList().push_back(loopBody);
 	unit -> builder.SetInsertPoint(loopBody);
 
-	bool isTerminated = b -> codegen();
+	bool isTerminated = b -> codegen(unit);
 
 	if(!isTerminated) {
 		builder.createBr(loopInduction);
@@ -1343,7 +1343,7 @@ bool For::codegen(CompilationUnit * unit) {
 }
 
 bool While::codegen(CompilationUnit * unit) {
-	llvm::Function* F = unit -> builder.getInsertBlock() -> getParent();
+	llvm::Function* F = unit -> builder.GetInsertBlock() -> getParent();
 
 	llvm::BasicBlock* loopCondition = llvm::BasicBlock::Create(*(unit -> context), "loop condition", F);
 	llvm::BasicBlock* loopBody = llvm::BasicBlock::Create(*(unit -> context), "loop body");
@@ -1356,7 +1356,7 @@ bool While::codegen(CompilationUnit * unit) {
 	unit -> builder.CreateBr(loopCondition);
 	unit -> builder.SetInsertPoint(loopCondition);
 
-	Value * cond = expr -> codegen(unit);
+	llvm::Value * cond = expr -> codegen(unit);
 	unit -> builder.CreateCondBr(cond, loopBody, mergeBB);
 
 	F -> getBasicBlockList().push_back(loopBody);
@@ -1401,7 +1401,7 @@ llvm::Value * TernaryExpression::codegen(CompilationUnit * unit) {
 
 	F -> getBasicBlockList().push_back(mergeBB);
 	unit -> builder.SetInsertPoint(mergeBB);
-	llvm::PHINode* PN = unit -> builder.CreatePHI(true_value.getType(), 2, "ternary temporary");
+	llvm::PHINode* PN = unit -> builder.CreatePHI(true_value -> getType(), 2, "ternary temporary");
 	
 	PN -> addIncoming(true_value, true_expression);
 	PN -> addIncoming(false_value, false_expression);
@@ -1475,16 +1475,16 @@ llvm::Value * CastExpression:: codegen(CompilationUnit* unit) {
 }
 
 llvm::Value * NameExpression::codegen(CompilationUnit* unit) {
-	llvm::Value * V = nameValues[name];
-	return builder.CreateLoad(V, name.c_str())
+	llvm::Value * V = unit -> namedValues[name];
+	return unit -> builder.CreateLoad(V, name.c_str());
 }
 
 llvm::Value * UnaryMinus::codegen(CompilationUnit* unit) {
 	llvm::Value * R = expr -> codegen(unit);
-	if(expr -> type == INT || expr -> type = BOOL) {
+	if(expr -> type == INT || expr -> type = LOGICAL) {
 		return builder.CreateNeg(R, "unary minus int/bool");
 
-	return builder.CreateFNeg(R, "floating point unary minus");
+	return unit -> builder.CreateFNeg(R, "floating point unary minus");
 }
 
 llvm::Value * Float::codegen(CompilationUnit* unit) {
