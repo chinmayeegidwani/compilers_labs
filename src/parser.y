@@ -182,6 +182,7 @@ single_statement
 	| TOK_CONTINUE { $$ = make_node<Continue>(@$); }
 	| TOK_RETURN { $$ = make_node<ReturnVoid>(@$); }
 	| TOK_RETURN expression { $$ = make_node<ReturnNotVoid>(@$, $2); }
+	| expression {}
 	;
 
 augmented_assign
