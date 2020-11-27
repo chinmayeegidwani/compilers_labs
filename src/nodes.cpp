@@ -1162,6 +1162,7 @@ llvm::Type * typeHelper(CompilationUnit * unit, Type type) {
 		case INT: { return llvm::Type::getInt32Ty(*(unit -> context)); break; }
 		case FLOAT: { return llvm::Type::getFloatTy(*(unit -> context)); break; }
 		case LOGICAL: { return llvm::Type::getInt1Ty(*(unit -> context)); break; }
+		case VOID: { return llvm::Type::getVoidTy(*(unit -> context)); break; }
 		default: std::cout << "Unknown type provided to typeHelper" << std::endl;
 	}
 
