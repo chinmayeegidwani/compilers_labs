@@ -1520,7 +1520,8 @@ llvm::Value * BinaryExpression::codegen(CompilationUnit * unit) {
 	}
 
 	else if(lhs -> getType() == typeHelper(unit, FLOAT)) {
-		case PLUS:
+		switch(op) {
+			case PLUS:
 			{
 				res = unit -> builder.CreateFAdd(lhs, rhs, "Add temp float");
 				break;
