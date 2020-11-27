@@ -1453,64 +1453,171 @@ llvm::Value * BinaryExpression::codegen(CompilationUnit * unit) {
 	llvm::Value * lhs = expression1 -> codegen(unit);
 	llvm::Value * rhs = expression2 -> codegen(unit);
 
-	switch(op) {
-		case PLUS:
-		{
-			res = unit -> builder.CreateAdd(lhs, rhs, "Add temporary");
-			break;
+	if(lhs -> getType() == typeHelper(unit, INT) || lhs -> getType() == typeHelper(unit, LOGICAL)) {
+		switch(op) {
+			case PLUS:
+			{
+				res = unit -> builder.CreateAdd(lhs, rhs, "Add temp ints");
+				break;
+			}
+			case MINUS:
+			{
+				res = unit -> builder.CreateSub(lhs, rhs, "Subtract temp ints");
+				break;
+			}
+			case MUL:
+			{
+				res = unit -> builder.CreateMul(lhs, rhs, "Multiply temp ints");
+				break;
+			}
+			case DIV:
+			{
+				res = unit -> builder.CreateSDiv(lhs, rhs, "Signed division temp ints");
+				break;
+			}
+			case LT:
+			{
+				res = unit -> builder.CreateICmpSLT(lhs, rhs, "Signed comparison LT ints");
+				break;
+			}
+			case LE:
+			{
+				res = unit -> builder.CreateICmpSLE(lhs, rhs, "Signed comparison LE ints");
+				break;
+			}
+			case GT:
+			{
+				res = unit -> builder.CreateICmpSGT(lhs, rhs, "Signed comparison GT ints");
+				break;
+			}
+			case GE:
+			{
+				res = unit -> builder.CreateICmpSGE(lhs, rhs, "Signed comparision GE ints");
+				break;
+			}
+			case NEQ:
+			{
+				res = unit -> builder.CreateICmpNE(lhs, rhs, "Not equal ints");
+				break;
+			}
+			case EQ:
+			{
+				res = unit -> builder.CreateICmpEQ(lhs, rhs, "Equal ints");
+				break;
+			}
+			case OR:
+			{
+				res = unit -> builder.CreateOr(lhs, rhs, "Or ints");
+				break;
+			}
+			case AND:
+			{
+				res = unit -> builder.CreateAnd(lhs, rhs, "And ints");
+				break;
+			}
+			default: std::cout << "Input binary operator not recognized" << std::endl; break;
 		}
-		case MINUS:
-		{
-			res = unit -> builder.CreateSub(lhs, rhs, "Subtract temporary");
-			break;
-		}
-		case MUL:
-		{
-			res = unit -> builder.CreateMul(lhs, rhs, "Multiply temp");
-			break;
-		}
-		case DIV:
-		{
-			res = unit -> builder.CreateSDiv(lhs, rhs, "Signed division temp");
-			break;
-		}
-		case LT:
-		{
-			res = unit -> builder.CreateICmpSLT(lhs, rhs, "Signed comparison LT");
-			break;
-		}
-		case LE:
-		{
-			res = unit -> builder.CreateICmpSLE(lhs, rhs, "Signed comparison LE");
-			break;
-		}
-		case GT:
-		{
-			res = unit -> builder.CreateICmpSGT(lhs, rhs, "Signed comparison GT");
-			break;
-		}
-		case GE:
-		{
-			res = unit -> builder.CreateICmpSGE(lhs, rhs, "Signed comparision GE");
-			break;
-		}
-		case NEQ:
-		{
-			res = unit -> builder.CreateICmpNE(lhs, rhs, "Not equal ints");
-			break;
-		}
-		case EQ:
-		{
-			res = unit -> builder.CreateICmpEQ(lhs, rhs, "Equal ints");
-			break;
-		}
-		default: std::cout << "Input binary operator not recognized" << std::endl; break;
 	}
+
+	else if(lhs -> getType() == typeHelper(unit, FLOAT)) {
+		case PLUS:
+			{
+				res = unit -> builder.CreateFAdd(lhs, rhs, "Add temp float");
+				break;
+			}
+			case MINUS:
+			{
+				res = unit -> builder.CreateFSub(lhs, rhs, "Subtract temp float");
+				break;
+			}
+			case MUL:
+			{
+				res = unit -> builder.CreateMul(lhs, rhs, "Multiply temp float");
+				break;
+			}
+			case DIV:
+			{
+				res = unit -> builder.CreateFDiv(lhs, rhs, "Division temp float");
+				break;
+			}
+			case LT:
+			{
+				res = unit -> builder.CreateFCmpOLT(lhs, rhs, "Comparison LT float");
+				break;
+			}
+			case LE:
+			{
+				res = unit -> builder.CreateFCmpOLE(lhs, rhs, "Comparison LE float");
+				break;
+			}
+			case GT:
+			{
+				res = unit -> builder.CreateFCmpOGT(lhs, rhs, "Comparison GT float");
+				break;
+			}
+			case GE:
+			{
+				res = unit -> builder.CreateFCmpOGE(lhs, rhs, "Comparision GE float");
+				break;
+			}
+			case NEQ:
+			{
+				res = unit -> builder.CreateFCmpONE(lhs, rhs, "NE float");
+				break;
+			}
+			case EQ:
+			{
+				res = unit -> builder.CreateFCmpOEQ(lhs, rhs, "EQ float");
+				break;
+			}
+
+			default: std::cout << "Input binary operator not recognized" << std::endl; break;
+		}
+	}
+
 	return res;
 }
 
 llvm::Value * CastExpression:: codegen(CompilationUnit* unit) {
-	return cExpression -> codegen(unit);
+	llvm::Value * res = expr -> codegen(unit);
+	if(res -> getType() == typeHelper(unit, INT) || res -> getType() == typeHelper(unit, LOGICAL)) {
+		switch(type) {
+			case INT:
+			{
+				break;
+			}
+			case BOOL:
+			{
+				break;
+			}
+			case FLOAT:
+			{
+				return unit -> builder -> CreateSIToFP(res, typeHelper(unit, FLOAT), "Int or bool to float");
+			}
+			default: std::cout << "Unrecognized type" :: std::endl; break;	
+		}
+		
+	}
+
+	else if(res -> getType() == typeHelper(unit, FLOAT)) {
+		switch(type) {
+			case INT:
+			{
+				return unit -> builder -> CreateFPToSI(res, typeHelper(unit INT), "Float to int");
+			}
+			case BOOL:
+			{
+				return unit -> builder -> CreateFPToSI(res, typeHelper(unit, LOOGICAL), "Float to bool");
+			}
+			case FLOAT:
+			{
+				break;
+			}
+			default: std::cout << "Unrecognized type" :: std::endl; break;	
+		}
+	}
+
+	return res;
 }
 
 llvm::Value * NameExpression::codegen(CompilationUnit* unit) {
@@ -1535,7 +1642,7 @@ llvm::Value * Int::codegen(CompilationUnit* unit) {
 }
 
 llvm::Value * Bool::codegen(CompilationUnit* unit) {
-	return llvm::ConstantInt::get(llvm::Type::getInt1Ty(*(unit -> context)), (int) data, false);
+	return llvm::ConstantInt::get(llvm::Type::getInt1Ty(*(unit -> context)), (int) data, true);
 }
 
 llvm::Value * FunctionCall::codegen(CompilationUnit* unit) {
