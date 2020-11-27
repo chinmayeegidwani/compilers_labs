@@ -27,7 +27,7 @@ class Block;
 class Suite;
 class Statement;
 class Declaration;
-class Expression Statement;
+class ExpressionStatement;
 class DeclarationAssign;
 class SimpleAssign;
 class AugmentedAssign;
