@@ -100,6 +100,16 @@ Type Declaration::checkType(std::map<std::string, Type> & scope) {
 	return NONE;
 }
 
+Type ExpressionStatement::checkType(std::map<std::string, Type> & scope) {
+	Type res = expr -> checkType(scope);
+
+	if(res == ERROR) {
+		return ERROR;
+	}
+
+	return NONE;
+}
+
 Type DeclarationAssign::checkType(std::map<std::string, Type> & scope) {
 	Type temp = decl -> checkType(scope);
 	if(temp == ERROR) {
@@ -480,6 +490,10 @@ bool Suite::checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) {
 	return res;
 }
 
+bool ExpressionStatement::checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) { 
+	return expr -> checkTypeArg(funcSig);
+}
+
 bool DeclarationAssign::checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) {
 	return expr -> checkTypeArg(funcSig);
 }
@@ -606,6 +620,13 @@ void Suite::printTree(){
 		suiteList[i]->printTree();
 	}
 	printf("\n	} ");
+	return;
+}
+
+void ExpressionStatement::printTree(){
+	printf("\n		expr stmt (%i, %i) { ", this->location.begin.line, this->location.begin.column);
+	expr->printTree();
+	printf("\n		}");
 	return;
 }
 
@@ -817,6 +838,14 @@ std::unique_ptr<Block> Suite::optimizeCP(){
 	}
 	optSuite -> location = this -> location;
 	return optSuite;
+}
+
+std::unique_ptr<Statement> ExpressionStatement::optimizeCP(){
+	std::unique_ptr<Expression> exprOpt;
+	exprOpt = expr->optimizeCP();
+	std::unique_ptr<ExpressionStatement> exprStatementOpt = std::make_unique<ExpressionStatement>(std::move(exprOpt));
+	exprStatementOpt -> location = this -> location;
+	return exprStatementOpt;
 }
 
 std::unique_ptr<Statement> Declaration::optimizeCP() {

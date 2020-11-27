@@ -162,7 +162,7 @@ block
 
 suite
 	: %empty {$$ = make_node<Suite>(@$); }
-	| suite statement {$$ = $1; $$ -> suiteList.push_back(std::move($2)); }
+	| suite statement {$$ = $1; $$ -> suiteList.push_back($2); }
 	;
 
 declaration
@@ -182,7 +182,7 @@ single_statement
 	| TOK_CONTINUE { $$ = make_node<Continue>(@$); }
 	| TOK_RETURN { $$ = make_node<ReturnVoid>(@$); }
 	| TOK_RETURN expression { $$ = make_node<ReturnNotVoid>(@$, $2); }
-	| expression {}
+	| expression {$$ = make_node<ExpressionStatement>(@$, $1); }
 	;
 
 augmented_assign

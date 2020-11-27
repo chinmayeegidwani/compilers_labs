@@ -27,6 +27,7 @@ class Block;
 class Suite;
 class Statement;
 class Declaration;
+class Expression Statement;
 class DeclarationAssign;
 class SimpleAssign;
 class AugmentedAssign;
@@ -183,6 +184,21 @@ public:
 };
 
 class SingleStatement : public Statement {};
+
+class ExpressionStatement: public SingleStatement {
+public:
+	std::unique_ptr<Expression> expr;
+	
+	ExpressionStatement(std::unique_ptr<Expression> expression) {
+		printf("Inside ExpressionStatement constructor \n");
+		expr = std::move(expression);
+	}
+
+	Type checkType(std::map<std::string, Type> & scope) override;
+	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
+	void printTree() override;
+	std::unique_ptr<Statement> optimizeCP() override;
+};
 
 class Declaration: public SingleStatement {
 public:
