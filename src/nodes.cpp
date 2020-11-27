@@ -1549,7 +1549,7 @@ llvm::Value * FunctionCall::codegen(CompilationUnit* unit) {
 		llvm_args.push_back(args[i] -> codegen(unit));
 	}
 
-	if(callee -> getReturnType() == TypeHelper(unit, VOID)) {
+	if(callee -> getReturnType() == typeHelper(unit, VOID)) {
 		return unit -> builder.CreateCall(callee, llvm_args);
 	}
 
