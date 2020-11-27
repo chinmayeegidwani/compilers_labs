@@ -1222,6 +1222,10 @@ bool Suite::codegen(CompilationUnit * unit) {
 	return false;
 }
 
+bool ExpressionStatement::codegen(CompilationUnit * unit) {
+	expr -> codegen(unit);
+	return false;
+}
 bool Declaration::codegen(CompilationUnit * unit) {
 	llvm::AllocaInst * alloca = unit -> builder.CreateAlloca(typeHelper(unit, type), nullptr, name);
 	unit -> namedValues[name] = alloca;

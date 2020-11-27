@@ -198,6 +198,7 @@ public:
 	bool checkTypeArg(std::map<std::string, std::vector<Type>> & funcSig) override;
 	void printTree() override;
 	std::unique_ptr<Statement> optimizeCP() override;
+	bool codegen(CompilationUnit * unit) override;
 };
 
 class Declaration: public SingleStatement {
