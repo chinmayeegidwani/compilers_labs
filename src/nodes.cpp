@@ -1580,22 +1580,22 @@ llvm::Value * BinaryExpression::codegen(CompilationUnit * unit) {
 }
 
 llvm::Value * CastExpression:: codegen(CompilationUnit* unit) {
-	llvm::Value * res = expr -> codegen(unit);
+	llvm::Value * res = cExpression -> codegen(unit);
 	if(res -> getType() == typeHelper(unit, INT) || res -> getType() == typeHelper(unit, LOGICAL)) {
 		switch(type) {
 			case INT:
 			{
 				break;
 			}
-			case BOOL:
+			case LOGICAL:
 			{
 				break;
 			}
 			case FLOAT:
 			{
-				return unit -> builder -> CreateSIToFP(res, typeHelper(unit, FLOAT), "Int or bool to float");
+				return unit -> builder.CreateSIToFP(res, typeHelper(unit, FLOAT), "Int or bool to float");
 			}
-			default: std::cout << "Unrecognized type" :: std::endl; break;	
+			default: std::cout << "Unrecognized type" << std::endl; break;	
 		}
 		
 	}
@@ -1604,17 +1604,17 @@ llvm::Value * CastExpression:: codegen(CompilationUnit* unit) {
 		switch(type) {
 			case INT:
 			{
-				return unit -> builder -> CreateFPToSI(res, typeHelper(unit INT), "Float to int");
+				return unit -> builder.CreateFPToSI(res, typeHelper(unit, INT), "Float to int");
 			}
-			case BOOL:
+			case LOGICAL:
 			{
-				return unit -> builder -> CreateFPToSI(res, typeHelper(unit, LOOGICAL), "Float to bool");
+				return unit -> builder.CreateFPToSI(res, typeHelper(unit, LOGICAL), "Float to bool");
 			}
 			case FLOAT:
 			{
 				break;
 			}
-			default: std::cout << "Unrecognized type" :: std::endl; break;	
+			default: std::cout << "Unrecognized type" << std::endl; break;	
 		}
 	}
 
