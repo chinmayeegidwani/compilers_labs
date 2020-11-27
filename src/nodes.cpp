@@ -1207,7 +1207,7 @@ llvm::Function * FunctionDefinition::codegen(CompilationUnit * unit) {
 
 	blockNode -> codegen(unit);
 
-//	llvm::verifyFunction(*F);
+	llvm::verifyFunction(*F);
 	return F;
 }
 
@@ -1547,6 +1547,10 @@ llvm::Value * FunctionCall::codegen(CompilationUnit* unit) {
 	std::vector<llvm::Value *> llvm_args;
 	for(unsigned long int i = 0; i < args.size(); i++) {
 		llvm_args.push_back(args[i] -> codegen(unit));
+	}
+
+	if(callee -> getReturnType() == TypeHelper(unit, VOID)) {
+		return unit -> builder.CreateCall(callee, llvm_args);
 	}
 
 	return unit -> builder.CreateCall(callee, llvm_args, "func call");
