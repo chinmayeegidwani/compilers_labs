@@ -190,7 +190,6 @@ public:
 	std::unique_ptr<Expression> expr;
 	
 	ExpressionStatement(std::unique_ptr<Expression> expression) {
-		printf("Inside ExpressionStatement constructor \n");
 		expr = std::move(expression);
 	}
 
